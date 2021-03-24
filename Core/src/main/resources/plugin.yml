@@ -1,0 +1,24 @@
+version: 3.0.0
+name: VenomCore
+main: com.Venom.VenomCore.VenomCore
+author: Alp135
+description: The core of Venom plugins.
+api-version: 1.13
+commands:
+  venomcore:
+    description: "The main command of venom core."
+  venomtimings:
+    description: "Fixed timings for 1.8.8."
+softdepend:
+  - Reserve
+  - Vault
+  - Jobs
+  - PlaceholderAPI
+  - MVdWPlaceholderAPI
+  - GriefPrevention
+  - Lands
+  - RedProtect
+  - UltimateClaims
+  - ASkyBlock
+  - FabledSkyBlock
+  - IridiumSkyBlock

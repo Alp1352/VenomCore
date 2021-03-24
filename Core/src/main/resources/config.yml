@@ -1,0 +1,4 @@
+# Debug modu. Eklentilerin verdihataykonsolun gsa
+debug: false
+# 1.8.8 Sürümendeki Timingsi çalıştırmaya yarar.
+fix_timings: false
