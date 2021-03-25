@@ -92,6 +92,7 @@ public class PluginHook<T extends Class<?>> {
         Map<PluginHook<?>, Hook> loaded = new HashMap<>();
 
         PluginManager manager = Bukkit.getPluginManager();
+
         for (PluginHook<?> pluginHook : getHooks(generic)) {
             if (manager.isPluginEnabled(pluginHook.getPluginName())) {
                 loaded.put(pluginHook, (Hook) pluginHook.load(plugin));
@@ -106,7 +107,8 @@ public class PluginHook<T extends Class<?>> {
      * @return All hooks of that type.
      */
     protected static List<PluginHook<?>> getHooks(Class<?> type) {
-        return hooks.entrySet().stream()
+        return hooks.entrySet()
+                .stream()
                 .filter(entry -> entry.getKey() == type || entry.getValue().getHandler() == type || type.isAssignableFrom(entry.getKey()))
                 .map(Map.Entry::getValue)
                 .collect(Collectors.toList());

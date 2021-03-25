@@ -62,10 +62,11 @@ public class OpenAnimationUtils {
         int loop = 0;
         boolean doubleUp = false;
         while (loop < 4) {
+            newInventory = new Container(size);
+
             if (!allInventories.isEmpty()) {
                 Container oldInventory = allInventories.get(loop - 1);
 
-                newInventory = new Container(size);
                 oldInventory.copy(newInventory);
 
                 emptyColumn(newInventory, 8, size);
@@ -89,6 +90,7 @@ public class OpenAnimationUtils {
 
                     newInventory.set(oldInventory.get(4 + (9 * i)), 4 + (9 * (i + 1)));
                 }
+
                 if (doubleUp) {
                     Container copy = new Container(size);
                     newInventory.copy(copy);
@@ -101,8 +103,6 @@ public class OpenAnimationUtils {
                         newInventory.set(copy.get(4 + (9 * i)), 4 + (9 * (i + 1)));
                     }
                 }
-            } else {
-                newInventory = new Container(size);
             }
 
             fillColumn(newInventory, 0, getItemsInColumn(baseInventory, 3 - loop, size), size);
@@ -113,6 +113,7 @@ public class OpenAnimationUtils {
             } else {
                 newInventory.set(baseInventory.get((size - 5) - (9 * loop + 1)), 4);
             }
+
             doubleUp = !doubleUp;
 
             allInventories.add(newInventory);

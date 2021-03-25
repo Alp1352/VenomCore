@@ -10,6 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public abstract class PluginCommand extends com.Venom.VenomCore.Commands.Command implements CommandExecutor, TabCompleter {
     private final Set<SubCommand> subCommands = new HashSet<>();
@@ -24,13 +25,15 @@ public abstract class PluginCommand extends com.Venom.VenomCore.Commands.Command
         this.command = command;
         org.bukkit.command.PluginCommand pluginCommand = plugin.getCommand(command);
 
-        Validate.notNull(pluginCommand, "Command cannot be null.");
+        Validate.notNull(pluginCommand, "Komut null olamaz! Plugin.yml dosyasini kontrol edin. Komut, kayitli olmayabilir.");
 
         this.plugin = plugin;
         pluginCommand.setExecutor(this);
         pluginCommand.setTabCompleter(this);
 
-        pluginCommand.setAliases(Arrays.asList(aliases));
+        if (aliases.length != 0) {
+            pluginCommand.setAliases(Arrays.asList(aliases));
+        }
     }
 
     @Override
@@ -80,35 +83,18 @@ public abstract class PluginCommand extends com.Venom.VenomCore.Commands.Command
             return null;
         }
 
-        /*
-        Set<String> possible = subCommands.stream()
-                .filter(subCommand -> sender.hasPermission(subCommand.getPermission())) // check sender perms.
-                .filter(subCommand -> subCommand.getSplit().length >= args.length) // check arg length.
-                .filter(subCommand -> !subCommand.isCommandPrivate()) // check if the command is private.
-                .filter(subCommand -> Arrays.equals(Arrays.copyOf(subCommand.getSplit(), args.length - 1), Arrays.copyOf(args, args.length - 1))) // check if nested args are equal.)
-                .map(subCommand -> subCommand.getSplit()[args.length - 1]) // convert subcommands into string
-                .collect(Collectors.toSet()); // get the set
-
-        We stopped using streams as it is really slow. (Around 3-4 times)
-        Below we do the same thing as above, just by using old fashion for loop.
-         */
-
-        Set<String> possible = new HashSet<>();
         int index = args.length - 1;
-
-        for (SubCommand subCommand : subCommands) {
-            String[] split = subCommand.getSplit();
-            if (sender.hasPermission(subCommand.getPermission()) &&
-                    split.length >= args.length &&
-                    !subCommand.isCommandPrivate() &&
-                    Arrays.equals(Arrays.copyOf(split, index), Arrays.copyOf(args, index))) {
-
-                possible.add(split[index]);
-            }
-        }
+        Set<String> possible = subCommands.stream()
+                .filter(subCommand -> sender.hasPermission(subCommand.getPermission()) &&
+                        subCommand.getSplit().length >= args.length &&
+                        !subCommand.isCommandPrivate() &&
+                        Arrays.equals(Arrays.copyOf(subCommand.getSplit(), index), Arrays.copyOf(args, index)))
+                .map(subCommand -> subCommand.getSplit()[args.length - 1])
+                .collect(Collectors.toSet());
 
         List<String> possibleCompletes = StringUtil.copyPartialMatches(args[index], possible, new ArrayList<>());
         Collections.sort(possibleCompletes);
+
         return possibleCompletes;
     }
 

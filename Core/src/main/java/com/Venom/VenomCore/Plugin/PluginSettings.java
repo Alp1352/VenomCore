@@ -5,13 +5,8 @@ package com.Venom.VenomCore.Plugin;
  * A class for plugin settings such as metrics.
  */
 public class PluginSettings {
-    private VenomPlugin plugin;
     private boolean versionChecker = true;
     private int metricsID = -1;
-
-    public PluginSettings(VenomPlugin plugin) {
-        this.plugin = plugin;
-    }
 
     public void setVersionChecker(boolean check) {
         this.versionChecker = check;

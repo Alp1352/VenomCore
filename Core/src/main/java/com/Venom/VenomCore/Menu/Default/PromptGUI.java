@@ -26,7 +26,7 @@ public class PromptGUI extends AnvilGUI {
         MenuItem item = new MenuItem(paper);
         getUpperContainer().set(item, 0);
 
-        setSoundAfterRename(CompatibleSound.ENTITY_EXPERIENCE_ORB_PICKUP);
+        setSoundAfterRename(CompatibleSound.ENTITY_EXPERIENCE_ORB_PICKUP.parseSound());
         if (prompt != null) {
             setActionAfterRename(prompt);
         }

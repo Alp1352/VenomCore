@@ -26,7 +26,6 @@ public class NMSManager {
     private static TitleUpdaterCore updaterCore;
 
     private static Class<?> PACKET_CLASS;
-    private static Class<?> ENTITY_PLAYER_CLASS;
     private static Class<?> CRAFT_PLAYER_CLASS;
 
     private static Method HANDLE_METHOD;
@@ -41,7 +40,7 @@ public class NMSManager {
 
             PACKET_CLASS = getNMSClass("Packet");
             CRAFT_PLAYER_CLASS = getCraftBukkitClass("entity.CraftPlayer");
-            ENTITY_PLAYER_CLASS = getNMSClass("EntityPlayer");
+            Class<?> ENTITY_PLAYER_CLASS = getNMSClass("EntityPlayer");
 
             HANDLE_METHOD = CRAFT_PLAYER_CLASS.getDeclaredMethod("getHandle");
             SEND_PACKET_METHOD = ENTITY_PLAYER_CLASS.getDeclaredMethod("sendPacket", PACKET_CLASS);

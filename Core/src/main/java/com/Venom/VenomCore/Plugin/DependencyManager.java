@@ -10,13 +10,8 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 public class DependencyManager {
-    private final VenomPlugin plugin;
 
     private final Map<Dependency, DependencyType> dependencies = new HashMap<>();
-
-    public DependencyManager(VenomPlugin plugin) {
-        this.plugin = plugin;
-    }
 
     public void addDependency(Dependency dependency, DependencyType type) {
         dependencies.put(dependency, type);
@@ -27,7 +22,10 @@ public class DependencyManager {
     }
 
     public List<Dependency> getDependencies(boolean enabled) {
-        return dependencies.keySet().stream().filter(key -> key.isEnabled() == enabled).collect(Collectors.toList());
+        return dependencies.keySet()
+                .stream()
+                .filter(key -> key.isEnabled() == enabled)
+                .collect(Collectors.toList());
     }
 
     public DependencyType getType(Dependency dependency) {
@@ -39,6 +37,10 @@ public class DependencyManager {
     }
 
     public List<Dependency> getDependencies(DependencyType type) {
-        return dependencies.entrySet().stream().filter(entry -> entry.getValue() == type).map(Map.Entry::getKey).collect(Collectors.toList());
+        return dependencies.entrySet()
+                .stream()
+                .filter(entry -> entry.getValue() == type)
+                .map(Map.Entry::getKey)
+                .collect(Collectors.toList());
     }
 }

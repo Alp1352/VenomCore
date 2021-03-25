@@ -1,11 +1,14 @@
 package com.Venom.VenomCore.Menu;
 
+import com.Venom.VenomCore.Item.ItemUtils;
 import com.Venom.VenomCore.Menu.Internal.Animations.Animation;
 import com.Venom.VenomCore.Menu.Internal.Animations.DefaultAnimations.SwitchAnimation;
 import com.Venom.VenomCore.Menu.Internal.Animations.DefaultAnimations.VenomAnimationHorizontal;
 import com.Venom.VenomCore.Menu.Internal.Animations.Frame;
 import com.Venom.VenomCore.Menu.Internal.Animations.Utils.OpenAnimationUtils;
 import com.Venom.VenomCore.Menu.Internal.Containers.Container;
+import com.Venom.VenomCore.Menu.Internal.Item.Action.ActionDetails;
+import com.Venom.VenomCore.Menu.Internal.Item.Action.ClickAction;
 import com.Venom.VenomCore.Menu.Internal.Item.MenuItem;
 import com.Venom.VenomCore.Menu.Internal.Utils.MenuUtils;
 import com.Venom.VenomCore.NMS.NMSManager;
@@ -15,17 +18,21 @@ import com.Venom.VenomCore.Task.Task;
 import com.Venom.VenomCore.VenomCore;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * @author Alp Beji
@@ -44,19 +51,24 @@ public abstract class GUI {
 
     private SwitchAnimation switchAnimation;
 
-    protected List<Player> viewers = Collections.synchronizedList(new ArrayList<>());
+    protected List<Player> viewers = new CopyOnWriteArrayList<>();
 
     private final MenuUtils utils;
+    private final VenomPlugin plugin;
 
     public GUI(VenomPlugin plugin, String menuName) {
         this.utils = new MenuUtils(plugin, menuName, this);
+        this.plugin = plugin;
     }
 
     /**
      * Opens the GUI.
      * @param p The player who will see the GUI.
      */
-    public abstract void open(Player p);
+    public void open(Player p) {
+        p.openInventory(getUpperInventory());
+        viewers.add(p);
+    }
 
     /**
      * Synchronizes the container with the GUI.
@@ -76,14 +88,24 @@ public abstract class GUI {
      * If you want only a player to close it, use the
      * closeInventory method of the player class.
      */
-    public abstract void close();
+    public void close() {
+        viewers.forEach(HumanEntity::closeInventory);
+        viewers.clear();
+    }
 
     /**
      * Synchronizes the container with the inventory, and
      * starts playing all the animations.
      * @return The GUI instance.
      */
-    public abstract GUI construct();
+    public GUI construct() {
+        if (!isSwitching()) {
+            update();
+        }
+        getUpperContainer().getFrames().forEach(frame -> runFrame(frame, getUpperContainer()));
+        runItemAnimations(getUpperContainer());
+        return this;
+    }
 
     /**
      * @return The inventory of the GUI.
@@ -95,12 +117,59 @@ public abstract class GUI {
      */
     public abstract Container getUpperContainer();
 
-    public abstract void onClick(InventoryClickEvent e);
+    public void onClick(InventoryClickEvent e) {
+        onClick(e, getUpperContainer());
+    }
+
+    protected void onClick(InventoryClickEvent e, Container container) {
+        MenuItem item = container.get(e.getSlot());
+
+        if (item == null || !ItemUtils.isEqual(item.getItem().toItemStack(), e.getCurrentItem())) {
+            item = loopAndFindItem(container, e.getSlot(), e.getCurrentItem());
+        }
+
+        if (item == null || isLocked()) {
+            e.setCancelled(true);
+            return;
+        }
+
+        Player p = (Player) e.getWhoClicked();
+
+        ActionDetails details = new ActionDetails(p, this);
+
+        ClickAction clickAction = item.getAction(e.getClick());
+        boolean cancel = clickAction.run(details).isCancelled();
+        e.setCancelled(cancel);
+
+        p.playSound(p.getLocation(), item.getSound(), 1f, 1f);
+
+        MenuItem itemForClick = item.getItemForClick(e.getClick());
+        if (itemForClick != null && !details.isItemForClickCancelled()) {
+            getUpperContainer().set(itemForClick, e.getSlot());
+            update();
+        }
+    }
+
+    private MenuItem loopAndFindItem(Container container, int slot, ItemStack item) {
+        for (Frame frame : container.getFrames()) {
+            if (frame.getSlot() != slot) {
+                continue;
+            }
+
+            for (MenuItem menuItem : frame.getItems()) {
+                if (ItemUtils.isEqual(item, menuItem.getItem().toItemStack())) {
+                    return menuItem;
+                }
+            }
+        }
+
+        return null;
+    }
 
     public void onClose(InventoryCloseEvent e) {
         Player p = (Player) e.getPlayer();
         if (!isClosable() && !isSwitching()) {
-            Bukkit.getScheduler().runTaskLater(VenomCore.getPlugin(VenomCore.class), () -> open(p), 10L);
+            Bukkit.getScheduler().runTaskLater(plugin, () -> open(p), 10L);
         } else if (isClosable()) {
             viewers.remove(p);
             tasks.forEach(Task::cancel);
@@ -161,6 +230,10 @@ public abstract class GUI {
         return utils;
     }
 
+    public List<Player> getViewers() {
+        return new ArrayList<>(viewers);
+    }
+
     public int getSize() { return getUpperInventory().getSize(); }
 
     /**
@@ -186,7 +259,7 @@ public abstract class GUI {
 
         getSwitchAnimation().setTargetSize(gui.getSize());
 
-        new RepeatingTask(JavaPlugin.getPlugin(VenomCore.class), 0, 1) {
+        new RepeatingTask(plugin, 0, 1) {
             int ticks = 1;
             final HashMap<Integer, Container> items = getSwitchAnimation().getInventories();
             GUI currentGUI = GUI.this;
@@ -195,8 +268,10 @@ public abstract class GUI {
                 if (getSwitchAnimation().getTotalTicks() == ticks) {
                     GUI.this.setLocked(false);
                     GUI.this.setSwitching(false);
+
                     gui.setLocked(false);
                     gui.setSwitching(false);
+
                     gui.construct().open(p);
                     cancel();
                     return;
@@ -230,8 +305,9 @@ public abstract class GUI {
      */
     public void changeTitle(String newTitle, int ticks) {
         viewers.forEach(player -> NMSManager.getTitleUpdater().updateTitle(player, newTitle));
+
         if (ticks != -1) {
-            Bukkit.getScheduler().runTaskLater(JavaPlugin.getPlugin(VenomCore.class), () -> viewers.forEach(player -> {
+            Bukkit.getScheduler().runTaskLater(plugin, () -> viewers.forEach(player -> {
                 player.openInventory(getUpperInventory());
                 setTitleChanged(false);
             }), ticks);
@@ -247,7 +323,7 @@ public abstract class GUI {
      * @param frame The frame to animate.
      */
     public void runFrame(Frame frame, Container container) {
-        new RepeatingTask(JavaPlugin.getPlugin(VenomCore.class), frame.getTicksBetweenItems(), frame.getTicksBetweenItems()) {
+        new RepeatingTask(plugin, frame.getTicksBetweenItems(), frame.getTicksBetweenItems()) {
             int times = 0;
             int item = 0;
             @Override
@@ -285,7 +361,7 @@ public abstract class GUI {
             int delay = type.getDelay();
             int between = type.getBetween();
 
-            RepeatingTask task = new RepeatingTask(JavaPlugin.getPlugin(VenomCore.class), delay, between) {
+            RepeatingTask task = new RepeatingTask(plugin, delay, between) {
                 int loop = 0;
                 @Override
                 public void run() {
@@ -302,6 +378,7 @@ public abstract class GUI {
                     }
                 }
             };
+
             tasks.add(task);
         }
     }

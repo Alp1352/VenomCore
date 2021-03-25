@@ -32,9 +32,14 @@ public class HookManager<T extends Hook> {
         if (loaded.contains(plugin))
             return;
 
-        registered.putAll(PluginHook.loadAll(generic, plugin).entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> (T) e.getValue())));
+        registered.putAll(PluginHook.loadAll(generic, plugin)
+                .entrySet()
+                .stream()
+                .collect(Collectors.toMap(Map.Entry::getKey, e -> (T) e.getValue())));
+
         VALUES = registered.values();
-        if (!registered.isEmpty()) {
+
+        if (!VALUES.isEmpty()) {
             current = VALUES.iterator().next();
         }
 

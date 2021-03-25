@@ -47,19 +47,11 @@ public class PlayerNameConv extends PlayerNamePrompt {
 
     @Override
     protected @Nullable String getFailedValidationText(@NotNull ConversationContext context, @NotNull String invalidInput) {
-        if (invalid != null) {
-            return Color.translate(invalid.apply(invalidInput));
-        } else {
-            return null;
-        }
+        return invalid != null ? Color.translate(invalid.apply(invalidInput)) : null;
     }
 
     @Override
     public @NotNull String getPromptText(@NotNull ConversationContext context) {
-        if (promptText == null) {
-            return " ";
-        } else {
-            return Color.translate(promptText);
-        }
+        return promptText == null ? " " : Color.translate(promptText);
     }
 }

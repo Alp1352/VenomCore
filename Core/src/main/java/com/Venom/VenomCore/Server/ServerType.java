@@ -10,7 +10,7 @@ public enum ServerType {
     IMANITY,
     UNKNOWN;
 
-    private final static ServerType serverType = getType();
+    private final static ServerType SERVER_TYPE = getType();
 
     private static ServerType getType() {
         try {
@@ -46,7 +46,7 @@ public enum ServerType {
     }
 
     public static ServerType getServerType() {
-        return serverType;
+        return SERVER_TYPE;
     }
 
     public static boolean isServerType(ServerType type) {

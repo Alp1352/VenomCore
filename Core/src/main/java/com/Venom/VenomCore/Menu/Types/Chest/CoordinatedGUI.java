@@ -11,6 +11,7 @@ import com.Venom.VenomCore.Menu.MenuType;
 import com.Venom.VenomCore.Plugin.VenomPlugin;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.Inventory;
@@ -26,31 +27,15 @@ import java.util.concurrent.ConcurrentHashMap;
 public abstract class CoordinatedGUI extends GUI {
     private final Inventory upperInventory;
     private final CoordinatedContainer upperContainer;
-    private final VenomPlugin plugin;
 
-    public CoordinatedGUI(VenomPlugin plugin,String menuName, String title, int size) {
+    public CoordinatedGUI(VenomPlugin plugin, String menuName, String title, int size) {
         super(plugin, menuName);
         this.upperInventory = Bukkit.createInventory(new MenuHolder(this), size, Color.translate(title));
         this.upperContainer = new CoordinatedContainer(size);
-        this.plugin = plugin;
     }
 
     public CoordinatedGUI(VenomPlugin plugin, String menuName) {
         this(plugin, menuName, MenuUtils.getTitle(plugin, menuName), MenuUtils.getSize(plugin, menuName));
-    }
-
-    @Override
-    public void open(Player p) {
-        viewers.add(p);
-        p.openInventory(upperInventory);
-    }
-
-    @Override
-    public void close() {
-        for (int i = 0; i < viewers.size(); i++) {
-            viewers.get(i).closeInventory();
-        }
-        viewers.clear();
     }
 
     @Override

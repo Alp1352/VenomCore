@@ -15,6 +15,9 @@ import com.Venom.VenomCore.Menu.MenuType;
 import com.Venom.VenomCore.NMS.NMSManager;
 import com.Venom.VenomCore.Plugin.VenomPlugin;
 import com.venom.nms.core.Anvil.AnvilContainer;
+import com.venom.nms.core.Anvil.AnvilSlot;
+import org.bukkit.Sound;
+import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryType;
@@ -37,7 +40,7 @@ public abstract class AnvilGUI extends GUI {
     private AnvilContainer container;
 
     private ClickAction action;
-    private CompatibleSound sound;
+    private Sound sound;
 
     public AnvilGUI(VenomPlugin plugin, String menuName, String title) {
         super(plugin, menuName);
@@ -52,32 +55,21 @@ public abstract class AnvilGUI extends GUI {
 
     @Override
     public void open(Player p) {
-        if (!viewers.isEmpty() && !viewers.contains(p)) {
-            close();
-        }
-
         viewers.add(p);
+
         container = NMSManager.getAnvil().createAnvil(p, new MenuHolder(this), title);
         upperInventory = container.toBukkit();
+
         construct();
         container.open();
     }
 
     @Override
-    public void close() {
-        for (int i = 0; i < viewers.size(); i++) {
-            viewers.get(i).closeInventory();
-        }
-        viewers.clear();
-    }
-
-    @Override
     public AnvilGUI construct() {
-        if (getUpperInventory() != null) {
-            update();
-            getUpperContainer().getFrames().forEach(frame -> runFrame(frame, getUpperContainer()));
-            runItemAnimations(getUpperContainer());
+        if (upperInventory != null) {
+            super.construct();
         }
+
         return this;
     }
 
@@ -110,7 +102,7 @@ public abstract class AnvilGUI extends GUI {
      * after the player renames the item.
      * @param sound The sound that will run.
      */
-    public void setSoundAfterRename(CompatibleSound sound) {
+    public void setSoundAfterRename(Sound sound) {
         this.sound = sound;
     }
 
@@ -125,68 +117,20 @@ public abstract class AnvilGUI extends GUI {
 
     @Override
     public void onClick(InventoryClickEvent e) {
-        if (e.getInventory().getType() != InventoryType.ANVIL)
-            return;
-
         // Check if the player renamed the item.
-        if (e.getSlot() == 2 && getUpperContainer().get(2) == null || e.getCurrentItem() != null && e.getCurrentItem().equals(getUpperContainer().get(2).getItem().toItemStack())) {
-            Result result = null;
-            if (action != null) {
-                result = action.run(new ActionDetails((Player) e.getWhoClicked(), this));
-            }
-
-            if (sound != null) {
-                sound.play(e.getWhoClicked());
-            }
-
-            boolean cancel = true;
-            if (result != null) {
-                cancel = result.isCancelled();
-            }
-            e.setCancelled(cancel);
-
+        if (e.getSlot() != 2) {
+            super.onClick(e);
             return;
         }
 
-        MenuItem item;
+        MenuItem menuItem = getUpperContainer().get(2);
 
-        if (upperContainer.get(e.getSlot()) == null || !ItemUtils.isEqual(upperContainer.get(e.getSlot()).getItem().toItemStack(), e.getCurrentItem())) {
-            item = loopAndFindItem(e.getSlot(), e.getCurrentItem());
-        } else {
-            item = upperContainer.get(e.getSlot());
+        if (e.getCurrentItem() != null && ItemUtils.isEqual(e.getCurrentItem(), menuItem)) {
+            Player player = (Player) e.getWhoClicked();
+            player.playSound(player.getLocation(), sound, 1f, 1f);
+
+            Result result = action != null ? action.run(new ActionDetails(player, this)) : null;
+            e.setCancelled(result == null || result.isCancelled());
         }
-
-        if (item == null || isLocked()) {
-            e.setCancelled(true);
-            return;
-        }
-
-        Player p = (Player) e.getWhoClicked();
-
-        ActionDetails details = new ActionDetails(p, this);
-        e.setCancelled(item.getAction(e.getClick()).run(details).isCancelled());
-
-        if (item.getSound() != null) {
-            p.playSound(p.getLocation(), item.getSound(), 1f, 1f);
-        }
-
-        MenuItem itemForClick = item.getItemForClick(e.getClick());
-        if (itemForClick != null && !details.isItemForClickCancelled()) {
-            upperContainer.set(itemForClick, e.getSlot());
-            update();
-        }
-    }
-
-    private MenuItem loopAndFindItem(int slot, ItemStack item) {
-        for (Frame frame : upperContainer.getFrames()) {
-            if (frame.getSlot() == slot) {
-                for (MenuItem items : frame.getItems()) {
-                    if (item.equals(items.getItem().toItemStack())) {
-                        return items;
-                    }
-                }
-            }
-        }
-        return null;
     }
 }

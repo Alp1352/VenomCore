@@ -2,22 +2,25 @@ package com.Venom.VenomCore.Menu;
 import org.bukkit.event.inventory.InventoryType;
 
 public enum MenuType {
-    CHEST, ANVIL, HOPPER, CRAFTING_TABLE, BREWING, FURNACE, DISPENSER;
+    CHEST(InventoryType.CHEST),
+    ANVIL(InventoryType.ANVIL),
+    HOPPER(InventoryType.HOPPER),
+    CRAFTING_TABLE(InventoryType.WORKBENCH),
+    BREWING(InventoryType.BREWING),
+    FURNACE(InventoryType.FURNACE),
+    DISPENSER(InventoryType.DISPENSER);
+
+    private final InventoryType type;
+    MenuType(InventoryType type) {
+        this.type = type;
+    }
+
+    public InventoryType toBukkit() {
+        return type;
+    }
 
     @Override
     public String toString() {
         return this.name();
-    }
-
-    public InventoryType toBukkit() {
-        try {
-            return InventoryType.valueOf(name());
-        } catch (IllegalArgumentException e) {
-            if (this == MenuType.CRAFTING_TABLE) {
-                return InventoryType.WORKBENCH;
-            }
-        }
-
-        return InventoryType.CHEST;
     }
 }

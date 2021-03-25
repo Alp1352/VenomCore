@@ -82,12 +82,13 @@ public class Locale {
      * @return The loaded locale.
      */
     public static Locale loadLocale(VenomPlugin plugin, String localeName) {
-        localeName = withExtension(localeName);
+        String name = withExtension(localeName);
 
-        File file = new File(getLocalesFolder(plugin), withExtension(localeName));
+        File file = new File(getLocalesFolder(plugin), name);
 
-        Locale locale = new Locale(plugin, file, localeName);
+        Locale locale = new Locale(plugin, file, name);
         locale.forceReload();
+
         plugin.setLocale(locale);
         return locale;
     }
@@ -145,11 +146,7 @@ public class Locale {
      * @return The string with extension.
      */
     private static String withExtension(String string) {
-        if (string.endsWith(EXTENSION)) {
-            return string;
-        } else {
-            return string + EXTENSION;
-        }
+        return string.endsWith(EXTENSION) ? string : string + EXTENSION;
     }
 
     /**

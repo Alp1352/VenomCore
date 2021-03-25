@@ -41,7 +41,7 @@ public class ItemBuilder {
 
     static {
         try {
-            Class<?> clazz = Class.forName("org.bukkit.craftbukkit." + ServerVersion.getServerVersion().getNMSVersion() + ".inventory.CraftMetaSkull");
+            Class<?> clazz = NMSManager.getCraftBukkitClass("inventory.CraftMetaSkull");
             if (ServerVersion.isServerVersionHigherOrEqual(ServerVersion.v1_15_R1)) {
                 profileMethod = clazz.getDeclaredMethod("setProfile", GameProfile.class);
                 profileMethod.setAccessible(true);

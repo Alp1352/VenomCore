@@ -14,10 +14,13 @@ public enum DatabaseType {
 
     public String getFileExtension() {
         switch (this) {
-            case YAML: return "yml";
-            case JSON: return "json";
+            case YAML:
+                return "yml";
+            case JSON:
+                return "json";
+            default:
+                return null;
         }
-        return null;
     }
 }
 

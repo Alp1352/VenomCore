@@ -3,6 +3,7 @@ import org.bukkit.ChatColor;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.IntStream;
 
 public class Animation {
     private final ChatColor[] colors;
@@ -88,11 +89,7 @@ public class Animation {
             if (getColors().length == colorCode + 1) {
                 oldColor = getColors()[colorCode - 1];
             } else {
-                if (colorCode != 0) {
-                    oldColor = getColors()[colorCode - 1];
-                } else {
-                    oldColor = getColors()[getColors().length - 1];
-                }
+                oldColor = colorCode != 0 ? getColors()[colorCode -1] : getColors()[getColors().length - 1];
             }
 
             for (int i = loop; i < name.length(); i++) {

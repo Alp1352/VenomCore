@@ -31,11 +31,7 @@ public class StringConv extends StringPrompt {
 
     @Override
     public @NotNull String getPromptText(@NotNull ConversationContext context) {
-        if (promptText == null) {
-            return " ";
-        } else {
-            return Color.translate(promptText);
-        }
+        return promptText == null ? " " : Color.translate(promptText);
     }
 
     @Override

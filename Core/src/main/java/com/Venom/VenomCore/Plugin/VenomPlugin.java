@@ -29,8 +29,8 @@ public abstract class VenomPlugin extends JavaPlugin {
     @Override
     public void onEnable() {
         loadDependencies();
-        settings = new PluginSettings(this);
-        dependencyManager = new DependencyManager(this);
+        settings = new PluginSettings();
+        dependencyManager = new DependencyManager();
         executor = new BukkitExecutor(this);
         sender.sendMessage(" ");
         sender.sendMessage(ChatColor.GREEN + "=============================");

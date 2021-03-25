@@ -7,8 +7,10 @@ import com.Venom.VenomCore.Menu.Internal.Animations.Utils.OpenAnimationUtils;
 import com.Venom.VenomCore.Menu.Internal.Containers.Container;
 import com.Venom.VenomCore.Menu.Internal.Item.MenuItem;
 
+import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.List;
+import java.util.stream.IntStream;
 
 /**
  * @author Alp Beji
@@ -16,9 +18,9 @@ import java.util.List;
  * GUI switch animation.
  */
 public class VenomAnimationHorizontal extends SwitchAnimation {
-    private static final HashMap<Integer, Container> baseInventories = new HashMap<>();
-    private static final HashMap<Integer, List<Container>> fadeInAnimation = new HashMap<>();
-    private static final HashMap<Integer, List<Container>> fadeOutAnimation = new HashMap<>();
+    private static final HashMap<Integer, Container> BASE_INVENTORIES = new HashMap<>();
+    private static final HashMap<Integer, List<Container>> FADE_IN_ANIMATION = new HashMap<>();
+    private static final HashMap<Integer, List<Container>> FADE_OUT_ANIMATION = new HashMap<>();
 
     public VenomAnimationHorizontal(int size) {
         super(size);
@@ -31,16 +33,16 @@ public class VenomAnimationHorizontal extends SwitchAnimation {
         Container baseInventory = getBaseInventory(size);
         Container baseTargetInventory = getBaseInventory(targetSize);
 
-        List<Container> fadeIn = fadeInAnimation.get(size);
+        List<Container> fadeIn = FADE_IN_ANIMATION.get(size);
         if (fadeIn == null) {
             fadeIn = OpenAnimationUtils.fadeInHorizontal(baseInventory, size);
-            fadeInAnimation.put(size, fadeIn);
+            FADE_IN_ANIMATION.put(size, fadeIn);
         }
 
-        List<Container> fadeOut = fadeOutAnimation.get(targetSize);
+        List<Container> fadeOut = FADE_OUT_ANIMATION.get(targetSize);
         if (fadeOut == null) {
             fadeOut = OpenAnimationUtils.fadeOutHorizontal(baseTargetInventory, targetSize);
-            fadeOutAnimation.put(targetSize, fadeOut);
+            FADE_OUT_ANIMATION.put(targetSize, fadeOut);
         }
 
         int a = 1;
@@ -51,13 +53,11 @@ public class VenomAnimationHorizontal extends SwitchAnimation {
             }
         }
 
-        for (int i = 9; i < 16; i++) {
-            inventories.put(i, baseInventory);
-        }
+        IntStream.range(9, 16)
+                .forEach(tick -> inventories.put(tick, baseInventory));
 
-        for (int i = 16; i< 25; i++) {
-            inventories.put(i, baseTargetInventory);
-        }
+        IntStream.range(16, 25)
+                .forEach(tick -> inventories.put(tick, baseTargetInventory));
 
         // 24 - 8 = 16
         a = 25;
@@ -83,13 +83,19 @@ public class VenomAnimationHorizontal extends SwitchAnimation {
     }
 
     private Container getBaseInventory(int maxSize) {
-        if (baseInventories.containsKey(maxSize)) {
-            return baseInventories.get(maxSize);
+        if (BASE_INVENTORIES.containsKey(maxSize)) {
+            return BASE_INVENTORIES.get(maxSize);
         }
 
         Container baseInventory = new Container(maxSize);
-        MenuItem green = new MenuItem(new ItemBuilder(CompatibleMaterial.GREEN_STAINED_GLASS_PANE.parseItem()).setName(Color.translate("&aVenom Workshop")));
-        MenuItem black = new MenuItem(new ItemBuilder(CompatibleMaterial.BLACK_STAINED_GLASS_PANE.parseItem()).setName(Color.translate("&8Venom Workshop")));
+
+        MenuItem green = new MenuItem(
+                new ItemBuilder(CompatibleMaterial.GREEN_STAINED_GLASS_PANE)
+                        .setName(Color.translate("&aVenom Workshop")));
+
+        MenuItem black = new MenuItem(
+                new ItemBuilder(CompatibleMaterial.BLACK_STAINED_GLASS_PANE)
+                        .setName(Color.translate("&8Venom Workshop")));
 
         baseInventory.fill(black);
 
@@ -101,7 +107,7 @@ public class VenomAnimationHorizontal extends SwitchAnimation {
         baseInventory.set(green, 24);
         baseInventory.set(green, 15);
 
-        baseInventories.put(maxSize, baseInventory);
+        BASE_INVENTORIES.put(maxSize, baseInventory);
         return baseInventory;
     }
 }

@@ -32,15 +32,10 @@ public class Pane {
     }
 
     private List<Integer> getSlots(int firstSlot, int secondSlot) {
-        if (firstSlot > secondSlot) {
-            bigSlot = firstSlot;
-            smallSlot = secondSlot;
-        } else {
-            bigSlot = secondSlot;
-            smallSlot = firstSlot;
-        }
+        bigSlot = Math.max(firstSlot, secondSlot);
+        smallSlot = Math.min(firstSlot, secondSlot);
 
-        List<Integer> slots = Collections.synchronizedList(new ArrayList<>());
+        List<Integer> slots = new ArrayList<>();
         int height = 0;
         while (smallSlot + (9 * height) <= bigSlot) {
             height = height + 1;

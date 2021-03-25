@@ -14,6 +14,7 @@ import com.Venom.VenomCore.Menu.Internal.Utils.MenuUtils;
 import com.Venom.VenomCore.Menu.MenuType;
 import com.Venom.VenomCore.Plugin.VenomPlugin;
 import org.bukkit.Bukkit;
+import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.ClickType;
 import org.bukkit.event.inventory.InventoryClickEvent;
@@ -23,6 +24,7 @@ import org.bukkit.inventory.ItemStack;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.IntStream;
 
 /**
  * @author Alp Beji
@@ -35,22 +37,26 @@ import java.util.concurrent.ConcurrentHashMap;
 public abstract class PagedGUI<Object> extends GUI {
     private final Inventory upperInventory;
     private final Container upperContainer;
-    private static final int PAGE_NUMBER = 0;
-    private final VenomPlugin plugin;
-    private int currentPage;
+
     private final ConcurrentHashMap<Integer, Container> pages = new ConcurrentHashMap<>();
+
+    private static final int PAGE_NUMBER = 0;
+    private int currentPage = PAGE_NUMBER;
 
     private final MenuItem backButton;
     private final MenuItem nextButton;
+
     private boolean itemsPlaced = false;
 
     public PagedGUI(VenomPlugin plugin, String menuName, String title, int size) {
         super(plugin, menuName);
-        this.plugin = plugin;
+
         this.upperInventory = Bukkit.createInventory(new MenuHolder(this), size, Color.translate(title));
+
         this.upperContainer = new Container(size);
-        currentPage = PAGE_NUMBER;
+
         pages.put(PAGE_NUMBER, upperContainer);
+
         this.backButton = getBackButton();
         this.nextButton = getNextButton();
 
@@ -82,14 +88,12 @@ public abstract class PagedGUI<Object> extends GUI {
             placeItems();
         }
 
-        p.openInventory(getUpperInventory());
-        viewers.add(p);
+        super.open(p);
     }
 
     @Override
     public void update() {
         Container container = pages.get(currentPage);
-
         upperInventory.clear();
 
         for (int i = 0; i < container.getSize(); i++) {
@@ -101,23 +105,11 @@ public abstract class PagedGUI<Object> extends GUI {
     }
 
     @Override
-    public void close() {
-        for (int i = 0; i < viewers.size(); i++) {
-            viewers.get(i).closeInventory();
-        }
-        viewers.clear();
-    }
-
-    @Override
     public PagedGUI<Object> construct() {
         if (!isItemsPlaced()) {
             placeItems();
         }
-        if (!isSwitching()) {
-            update();
-        }
-        upperContainer.getFrames().forEach(frame -> runFrame(frame, getUpperContainer()));
-        runItemAnimations(getUpperContainer());
+        super.construct();
         return this;
     }
 
@@ -146,22 +138,19 @@ public abstract class PagedGUI<Object> extends GUI {
 
         Container currentContainer = pages.get(page);
 
-        int a = 0;
-        while (currentContainer.getNextFreeSlot() != -1) {
-            if (a < objects.size()) {
-                Object object = objects.get(a);
-                currentContainer.set(getItemForObject(object), currentContainer.getNextFreeSlot());
-                if (currentContainer.getNextFreeSlot() == -1) {
-                    page = page + 1;
-                    currentContainer = pages.get(page);
-                    if (currentContainer == null)
-                        break;
-                }
-                a = a + 1;
-            } else {
-                break;
+        int index = 0;
+        while (currentContainer != null && index < objects.size() && currentContainer.getNextFreeSlot() != -1) {
+            Object object = objects.get(index);
+            currentContainer.set(getItemForObject(object), currentContainer.getNextFreeSlot());
+
+            if (currentContainer.getNextFreeSlot() == -1) {
+                page = page + 1;
+                currentContainer = pages.get(page);
             }
+
+            index = index + 1;
         }
+
         itemsPlaced = true;
     }
 
@@ -182,49 +171,7 @@ public abstract class PagedGUI<Object> extends GUI {
 
     @Override
     public void onClick(InventoryClickEvent e) {
-        MenuItem item;
-
-        Container container = pages.get(currentPage);
-
-        if (container.get(e.getSlot()) == null || !ItemUtils.isEqual(container.get(e.getSlot()).getItem().toItemStack(), e.getCurrentItem())) {
-            item = loopAndFindItem(e.getSlot(), e.getCurrentItem());
-        } else {
-            item = container.get(e.getSlot());
-        }
-
-        if (item == null || isLocked()) {
-            e.setCancelled(true);
-            return;
-        }
-
-        Player p = (Player) e.getWhoClicked();
-
-        ActionDetails details = new ActionDetails(p, this);
-
-        if (item.getSound() != null) {
-            p.playSound(p.getLocation(), item.getSound(), 1f, 1f);
-        }
-
-        e.setCancelled(item.getAction(e.getClick()).run(details).isCancelled());
-
-        MenuItem itemForClick = item.getItemForClick(e.getClick());
-        if (itemForClick != null && !details.isItemForClickCancelled()) {
-            container.set(itemForClick, e.getSlot());
-            update();
-        }
-    }
-
-    private MenuItem loopAndFindItem(int slot, ItemStack item) {
-        for (Frame frame : upperContainer.getFrames()) {
-            if (frame.getSlot() == slot) {
-                for (MenuItem items : frame.getItems()) {
-                    if (item.equals(items.getItem().toItemStack())) {
-                        return items;
-                    }
-                }
-            }
-        }
-        return null;
+        super.onClick(e, pages.get(currentPage));
     }
 
     public boolean isItemsPlaced() {
