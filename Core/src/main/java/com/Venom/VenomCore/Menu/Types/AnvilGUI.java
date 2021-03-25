@@ -1,10 +1,8 @@
 package com.Venom.VenomCore.Menu.Types;
 
-import com.Venom.VenomCore.Compatibility.CompatibleSound;
 import com.Venom.VenomCore.Item.ItemUtils;
 import com.Venom.VenomCore.Menu.Engine.MenuHolder;
 import com.Venom.VenomCore.Menu.GUI;
-import com.Venom.VenomCore.Menu.Internal.Animations.Frame;
 import com.Venom.VenomCore.Menu.Internal.Containers.Container;
 import com.Venom.VenomCore.Menu.Internal.Item.Action.ActionDetails;
 import com.Venom.VenomCore.Menu.Internal.Item.Action.ClickAction;
@@ -15,14 +13,10 @@ import com.Venom.VenomCore.Menu.MenuType;
 import com.Venom.VenomCore.NMS.NMSManager;
 import com.Venom.VenomCore.Plugin.VenomPlugin;
 import com.venom.nms.core.Anvil.AnvilContainer;
-import com.venom.nms.core.Anvil.AnvilSlot;
 import org.bukkit.Sound;
-import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryClickEvent;
-import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.inventory.Inventory;
-import org.bukkit.inventory.ItemStack;
 
 /**
  * @author Alp Beji

@@ -15,7 +15,6 @@ import com.Venom.VenomCore.NMS.NMSManager;
 import com.Venom.VenomCore.Plugin.VenomPlugin;
 import com.Venom.VenomCore.Task.RepeatingTask;
 import com.Venom.VenomCore.Task.Task;
-import com.Venom.VenomCore.VenomCore;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.HumanEntity;
@@ -25,13 +24,10 @@ import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**

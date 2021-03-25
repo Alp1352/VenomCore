@@ -1,9 +1,9 @@
 package com.Venom.VenomCore.Menu.Internal.Animations;
+
 import org.bukkit.ChatColor;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.IntStream;
 
 public class Animation {
     private final ChatColor[] colors;

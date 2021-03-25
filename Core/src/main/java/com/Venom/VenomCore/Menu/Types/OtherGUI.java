@@ -5,11 +5,8 @@ import com.Venom.VenomCore.Menu.GUI;
 import com.Venom.VenomCore.Menu.Internal.Containers.Container;
 import com.Venom.VenomCore.Menu.Internal.Utils.MenuUtils;
 import com.Venom.VenomCore.Menu.MenuType;
-import com.Venom.VenomCore.Menu.Types.Chest.SimpleGUI;
 import com.Venom.VenomCore.Plugin.VenomPlugin;
 import org.bukkit.Bukkit;
-import org.bukkit.entity.HumanEntity;
-import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 
 /**

@@ -1,27 +1,14 @@
 package com.Venom.VenomCore.Menu.Types.Chest;
 
 import com.Venom.VenomCore.Chat.Color;
-import com.Venom.VenomCore.Compatibility.CompatibleMaterial;
-import com.Venom.VenomCore.Item.ItemBuilder;
-import com.Venom.VenomCore.Item.ItemUtils;
 import com.Venom.VenomCore.Menu.Engine.MenuHolder;
 import com.Venom.VenomCore.Menu.GUI;
-import com.Venom.VenomCore.Menu.Internal.Animations.Frame;
 import com.Venom.VenomCore.Menu.Internal.Containers.Container;
-import com.Venom.VenomCore.Menu.Internal.Item.Action.ActionDetails;
-import com.Venom.VenomCore.Menu.Internal.Item.Action.ClickAction;
-import com.Venom.VenomCore.Menu.Internal.Item.MenuItem;
 import com.Venom.VenomCore.Menu.Internal.Utils.MenuUtils;
 import com.Venom.VenomCore.Menu.MenuType;
 import com.Venom.VenomCore.Plugin.VenomPlugin;
 import org.bukkit.Bukkit;
-import org.bukkit.entity.HumanEntity;
-import org.bukkit.entity.Player;
-import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.Inventory;
-import org.bukkit.inventory.ItemStack;
-
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author Alp Beji
