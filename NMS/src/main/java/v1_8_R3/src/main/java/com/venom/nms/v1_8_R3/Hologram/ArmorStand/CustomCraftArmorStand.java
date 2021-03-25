@@ -8,90 +8,150 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.util.EulerAngle;
 
 public class CustomCraftArmorStand extends CraftArmorStand {
-
     public CustomCraftArmorStand(CraftServer server, CustomArmorStand entity) {
         super(server, entity);
     }
 
     // CraftArmorStand.java
     @Override
-    public void setArms(boolean arms) { }
+    public void setArms(boolean arms) {
+        // Disabled.
+    }
 
     @Override
-    public void setBasePlate(boolean basePlate) { }
+    public void setBasePlate(boolean basePlate) {
+        // Disabled.
+    }
 
     @Override
-    public void setBodyPose(EulerAngle pose) { }
+    public void setBodyPose(EulerAngle pose) {
+        // Disabled.
+    }
 
     @Override
-    public void setBoots(ItemStack item) { }
+    public void setBoots(ItemStack item) {
+        // Disabled.
+    }
 
     @Override
-    public void setChestplate(ItemStack item) { }
+    public void setChestplate(ItemStack item) {
+        // Disabled.
+    }
 
     @Override
-    public void setGravity(boolean gravity) { }
+    public void setGravity(boolean gravity) {
+        // Disabled.
+    }
 
     @Override
-    public void setHeadPose(EulerAngle pose) { }
+    public void setHeadPose(EulerAngle pose) {
+        // Disabled.
+    }
 
     @Override
-    public void setHelmet(ItemStack item) { }
+    public void setHelmet(ItemStack item) {
+        // Disabled.
+    }
 
     @Override
-    public void setItemInHand(ItemStack item) { }
+    public void setItemInHand(ItemStack item) {
+        // Disabled.
+    }
 
     @Override
-    public void setLeftArmPose(EulerAngle pose) { }
+    public void setLeftArmPose(EulerAngle pose) {
+        // Disabled.
+    }
 
     @Override
-    public void setLeftLegPose(EulerAngle pose) { }
+    public void setLeftLegPose(EulerAngle pose) {
+        // Disabled.
+    }
 
     @Override
-    public void setLeggings(ItemStack item) { }
+    public void setLeggings(ItemStack item) {
+        // Disabled.
+    }
 
     @Override
-    public void setRightArmPose(EulerAngle pose) { }
+    public void setRightArmPose(EulerAngle pose) {
+        // Disabled.
+    }
 
     @Override
-    public void setRightLegPose(EulerAngle pose) { }
+    public void setRightLegPose(EulerAngle pose) {
+        // Disabled.
+    }
 
     @Override
-    public void setSmall(boolean small) { }
+    public void setSmall(boolean small) {
+        // Disabled.
+    }
 
     @Override
-    public void setVisible(boolean visible) { }
+    public void setVisible(boolean visible) {
+        // Disabled.
+    }
 
     // CraftLivingEntity.java
     @Override
-    public void setRemoveWhenFarAway(boolean remove) { }
+    public void setRemoveWhenFarAway(boolean remove) {
+        // Disabled.
+    }
 
     // CraftEntity.java
     // make the entity invulnerable
     @Override
-    public void remove() { }
+    public void remove() {
+        // Disabled.
+    }
 
     // lock location
     @Override
-    public boolean teleport(Location loc) { return false; }
+    public boolean teleport(Location loc) {
+        // Disabled.
+        return false;
+    }
     @Override
-    public boolean teleport(Entity entity) { return false; }
+    public boolean teleport(Entity entity) {
+        // Disabled.
+        return false;
+    }
     @Override
-    public boolean teleport(Location loc, PlayerTeleportEvent.TeleportCause cause) { return false; }
+    public boolean teleport(Location loc, PlayerTeleportEvent.TeleportCause cause) {
+        // Disabled.
+        return false;
+    }
     @Override
-    public boolean teleport(Entity entity, PlayerTeleportEvent.TeleportCause cause) { return false; }
+    public boolean teleport(Entity entity, PlayerTeleportEvent.TeleportCause cause) {
+        // Disabled.
+        return false;
+    }
 
     // passengers
     @Override
-    public boolean setPassenger(Entity entity) { return false; }
+    public boolean setPassenger(Entity entity) {
+        // Disabled.
+        return false;
+    }
     @Override
-    public boolean eject() { return false; }
+    public boolean eject() {
+        // Disabled.
+        return false;
+    }
     @Override
-    public boolean leaveVehicle() { return false; }
+    public boolean leaveVehicle() {
+        // Disabled.
+        return false;
+    }
 
     // lock the custom name
     @Override
-    public void setCustomName(String name) { }
+    public void setCustomName(String name) {
+        // Disabled.
+    }
     @Override
-    public void setCustomNameVisible(boolean flag) { }
+    public void setCustomNameVisible(boolean flag) {
+        // Disabled.
+    }
 }
