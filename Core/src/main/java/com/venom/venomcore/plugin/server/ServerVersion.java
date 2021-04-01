@@ -5,7 +5,7 @@ import org.bukkit.Bukkit;
 import java.util.Arrays;
 
 public enum ServerVersion {
-    v1_7_R3("1.7.10"),
+    v1_7_R4("1.7.10"),
     v1_8_R1("1.8.0"),
     v1_8_R2("1.8.3"),
     v1_8_R3("1.8.8"),
@@ -32,7 +32,7 @@ public enum ServerVersion {
     static {
         try {
             version = ServerVersion.valueOf(Bukkit.getServer().getClass().getPackage().getName().replace(".", ",").split(",")[3]);
-            if (version == ServerVersion.v1_17_R1 || version == ServerVersion.v1_7_R3) {
+            if (version == ServerVersion.v1_17_R1 || version == ServerVersion.v1_7_R4) {
                 System.out.println("Kullandiginiz surum, suanda desteklenmemektedir.");
             }
         } catch (IllegalArgumentException e) {
@@ -86,7 +86,7 @@ public enum ServerVersion {
     }
 
     public static boolean isSupported() {
-        return !(getServerVersion() == ServerVersion.UNKNOWN) && !(getServerVersion() == ServerVersion.v1_7_R3);
+        return (getServerVersion() != ServerVersion.UNKNOWN) && (getServerVersion() != ServerVersion.v1_7_R4);
     }
 
     public static boolean isServerLegacy() {

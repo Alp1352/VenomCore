@@ -6,6 +6,10 @@ import net.md_5.bungee.api.chat.HoverEvent;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.entity.Player;
 
+import java.util.Arrays;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+
 /**
  * @author Alp Beji
  * A class for clickable messages.
@@ -33,9 +37,12 @@ public class CustomMessage {
      */
     public void setHoverAction(HoverEvent.Action action, String... values) {
         BaseComponent[] array = new BaseComponent[values.length];
-        for (int i = 0; i < values.length; i++) {
-            array[i] = new TextComponent(values[i]);
-        }
+
+        Arrays.stream(values)
+                .map(TextComponent::new)
+                .collect(Collectors.toList())
+                .toArray(array);
+
         this.text.setHoverEvent(new HoverEvent(action, array));
     }
 

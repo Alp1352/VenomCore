@@ -324,7 +324,7 @@ public abstract class GUI {
      * @param frame The frame to animate.
      */
     public void runFrame(Frame frame, Container container) {
-        new RepeatingTask(plugin, frame.getTicksBetweenItems(), frame.getTicksBetweenItems()) {
+        new RepeatingTask(plugin, 0, frame.getTicksBetweenItems()) {
             int times = 0;
             int item = 0;
             @Override
@@ -345,6 +345,7 @@ public abstract class GUI {
                 if (frame.getSound() != null) {
                     viewers.forEach(player -> player.playSound(player.getLocation(), frame.getSound(), 1f, 1f));
                 }
+
                 item = item + 1;
             }
         };

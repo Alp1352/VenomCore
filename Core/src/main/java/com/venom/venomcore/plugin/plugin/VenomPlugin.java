@@ -49,9 +49,7 @@ public abstract class VenomPlugin extends JavaPlugin {
             String localeName = setupLocale();
             sender.sendMessage(ChatColor.GRAY + "Dil dosyasi " + ChatColor.WHITE + localeName + ChatColor.GRAY + " ile yuklendi!");
             onVenomPluginEnable();
-            sender.sendMessage(ChatColor.GREEN + "=============================");
-            sender.sendMessage(" ");
-        } catch (Throwable x) {
+        } catch (Exception x) {
             if (VenomCore.debug) {
                 x.printStackTrace();
                 return;
@@ -60,10 +58,10 @@ public abstract class VenomPlugin extends JavaPlugin {
             sender.sendMessage(ChatColor.GRAY + getDescription().getName() + " acilirken hata olustu!");
             sender.sendMessage(ChatColor.GRAY + "Discord sunucumuzdan destek alabilirsiniz.");
             sender.sendMessage(" ");
-            sender.sendMessage(ChatColor.GREEN + "=============================");
-            sender.sendMessage(" ");
             disablePlugin();
         }
+        sender.sendMessage(ChatColor.GREEN + "=============================");
+        sender.sendMessage(" ");
     }
 
     public void disablePlugin() {
@@ -79,8 +77,6 @@ public abstract class VenomPlugin extends JavaPlugin {
         sender.sendMessage(ChatColor.GRAY + "Aksiyon: " + ChatColor.RED + "Kapatiliyor...");
         try {
             onVenomPluginDisable();
-            sender.sendMessage(ChatColor.GREEN + "=============================");
-            sender.sendMessage(" ");
         } catch (Throwable x) {
             if (VenomCore.debug) {
                 x.printStackTrace();
@@ -93,6 +89,8 @@ public abstract class VenomPlugin extends JavaPlugin {
             sender.sendMessage(" ");
             disablePlugin();
         }
+        sender.sendMessage(ChatColor.GREEN + "=============================");
+        sender.sendMessage(" ");
     }
 
     private void loadDependencies() {

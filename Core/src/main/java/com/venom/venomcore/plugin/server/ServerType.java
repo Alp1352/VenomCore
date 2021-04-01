@@ -2,6 +2,8 @@ package com.venom.venomcore.plugin.server;
 
 import org.bukkit.Bukkit;
 
+import java.util.Arrays;
+
 public enum ServerType {
     SPIGOT,
     CRAFT_BUKKIT,
@@ -54,23 +56,12 @@ public enum ServerType {
     }
 
     public static boolean isServerType(ServerType... types) {
-        if (types.length == 0)
-            return false;
-
-        boolean serverType = false;
-
-        for (ServerType type : types) {
-            if (type == getServerType()) {
-                serverType = true;
-                break;
-            }
-        }
-
-        return serverType;
+        return Arrays.stream(types)
+                .anyMatch(ServerType::isServerType);
     }
 
     public static boolean isSupported() {
-        return !(getServerType() == UNKNOWN);
+        return (getServerType() != UNKNOWN);
     }
 
     public static boolean isAsync() {

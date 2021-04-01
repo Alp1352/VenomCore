@@ -1,6 +1,6 @@
 version: 3.0.0
 name: VenomCore
-main: com.Venom.VenomCore.VenomCore
+main: com.venom.venomcore.plugin.VenomCore
 author: Alp135
 description: The core of Venom plugins.
 api-version: 1.13

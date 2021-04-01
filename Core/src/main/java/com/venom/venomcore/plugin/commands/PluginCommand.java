@@ -31,7 +31,7 @@ public abstract class PluginCommand extends com.venom.venomcore.plugin.commands.
         pluginCommand.setExecutor(this);
         pluginCommand.setTabCompleter(this);
 
-        if (aliases.length != 0) {
+        if (aliases.length > 0) {
             pluginCommand.setAliases(Arrays.asList(aliases));
         }
     }

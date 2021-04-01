@@ -36,19 +36,31 @@ public class ItemBuilder {
     private ItemStack item;
     private ItemMeta itemMeta;
 
-    private static Field profileField;
-    private static Method profileMethod;
+    private static Field PROFILE_FIELD;
+    private static Method PROFILE_METHOD;
+
+    private static Method SPIGOT_METHOD;
+    private static Method UNBREAKABLE_METHOD;
 
     static {
         try {
             Class<?> clazz = NMSManager.getCraftBukkitClass("inventory.CraftMetaSkull");
             if (ServerVersion.isServerVersionHigherOrEqual(ServerVersion.v1_15_R1)) {
-                profileMethod = clazz.getDeclaredMethod("setProfile", GameProfile.class);
-                profileMethod.setAccessible(true);
+                PROFILE_METHOD = clazz.getDeclaredMethod("setProfile", GameProfile.class);
+                PROFILE_METHOD.setAccessible(true);
             } else {
-                profileField = clazz.getDeclaredField("profile");
-                profileField.setAccessible(true);
+                PROFILE_FIELD = clazz.getDeclaredField("profile");
+                PROFILE_FIELD.setAccessible(true);
             }
+
+            if (ServerVersion.isServerVersionLowerThan(ServerVersion.v1_11_R1)) {
+                SPIGOT_METHOD = ItemMeta.class.getDeclaredMethod("spigot");
+                SPIGOT_METHOD.setAccessible(true);
+
+                UNBREAKABLE_METHOD = SPIGOT_METHOD.getReturnType().getMethod("setUnbreakable", boolean.class);
+                UNBREAKABLE_METHOD.setAccessible(true);
+            }
+
         } catch (ReflectiveOperationException e) {
             e.printStackTrace();
         }
@@ -94,11 +106,7 @@ public class ItemBuilder {
         if (head == null)
             return;
 
-        if (!head.hasItemMeta()) {
-            meta = (SkullMeta) Bukkit.getItemFactory().getItemMeta(head.getType());
-        } else {
-            meta = (SkullMeta) head.getItemMeta();
-        }
+        meta = (SkullMeta) head.getItemMeta();
 
         if (meta == null) return;
 
@@ -106,13 +114,14 @@ public class ItemBuilder {
         profile.getProperties().put("textures", new Property("textures", base64));
         try {
             if (ServerVersion.isServerVersionHigherOrEqual(ServerVersion.v1_15_R1)) {
-                profileMethod.invoke(meta, profile);
+                PROFILE_METHOD.invoke(meta, profile);
             } else {
-                profileField.set(meta, profile);
+                PROFILE_FIELD.set(meta, profile);
             }
         } catch (ReflectiveOperationException e) {
             e.printStackTrace();
         }
+
         head.setItemMeta(meta);
         this.item = head;
         this.itemMeta = meta;
@@ -207,10 +216,8 @@ public class ItemBuilder {
             itemMeta.setUnbreakable(unbreakable);
         } else {
             try {
-                Method method = itemMeta.getClass().getMethod("spigot");
-                Object spigot = method.invoke(itemMeta);
-                Method setUnbreakable = spigot.getClass().getMethod("setUnbreakable", Boolean.class);
-                setUnbreakable.invoke(spigot, unbreakable);
+                Object spigot = SPIGOT_METHOD.invoke(itemMeta);
+                UNBREAKABLE_METHOD.invoke(spigot, unbreakable);
             } catch (Exception ignored) {}
         }
         return this;
@@ -274,7 +281,6 @@ public class ItemBuilder {
      * @return The builder instance.
      */
     public ItemBuilder setGlowing(boolean glow) {
-        // Prevent losing the ItemMeta.
         this.item.setItemMeta(itemMeta);
         NBTItem item = toNBT();
         if (glow) {
@@ -291,7 +297,8 @@ public class ItemBuilder {
             item.remove("ench");
             this.item = item.toBukkit();
         }
-        this.itemMeta = this.item.getItemMeta(); // Just in case.
+
+        this.itemMeta = this.item.getItemMeta();
         return this;
     }
 

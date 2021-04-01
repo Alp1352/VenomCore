@@ -38,12 +38,12 @@ public class LocaleMessage {
      * @param prefix Whether to add a prefix or not.
      */
     public void sendMessage(Player player, boolean prefix) {
-        String message;
+        String message = text;
         if (prefix && this.prefix != null) {
             message = this.prefix + text;
-        } else {
-            message = text;
         }
+
+
         player.sendMessage(message);
     }
 

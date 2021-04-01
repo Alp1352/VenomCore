@@ -14,8 +14,11 @@ public class ConversationUtils {
      * @return The created factory.
      */
     public static ConversationFactory getQuickFactory(JavaPlugin plugin, Prompt firstPrompt) {
-        ConversationFactory factory = new ConversationFactory(plugin);
-        return factory.withFirstPrompt(firstPrompt).withLocalEcho(false).withModality(false).withTimeout(100);
+        return new ConversationFactory(plugin)
+                .withFirstPrompt(firstPrompt)
+                .withLocalEcho(false)
+                .withModality(false)
+                .withTimeout(100);
     }
 
     /**
@@ -28,6 +31,7 @@ public class ConversationUtils {
      */
     public static Conversation getQuickConversation(JavaPlugin plugin, Prompt firstPrompt, Conversable conversable, boolean start) {
         Conversation conversation = getQuickFactory(plugin, firstPrompt).buildConversation(conversable);
+
         if (start) conversation.begin();
 
         return conversation;

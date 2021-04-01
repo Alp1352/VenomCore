@@ -11,9 +11,9 @@ public class JsonDatabase extends FileDatabase {
 
     public JsonDatabase(File file) {
         super(LightningBuilder.fromFile(file)
-        .setConfigSettings(ConfigSettings.SKIP_COMMENTS)
-        .setDataType(DataType.UNSORTED)
-        .setReloadSettings(ReloadSettings.MANUALLY)
-        .createJson());
+                .setConfigSettings(ConfigSettings.SKIP_COMMENTS)
+                .setDataType(DataType.UNSORTED)
+                .setReloadSettings(ReloadSettings.MANUALLY)
+                .createJson());
     }
 }

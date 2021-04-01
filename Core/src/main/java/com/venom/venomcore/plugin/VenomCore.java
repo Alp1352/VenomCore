@@ -1,4 +1,5 @@
 package com.venom.venomcore.plugin;
+import com.venom.venomcore.plugin.chat.Color;
 import com.venom.venomcore.plugin.commands.fix.TimingsFix;
 import com.venom.venomcore.plugin.commands.fix.TimingsFixCommand;
 import com.venom.venomcore.plugin.external.economy.EconomyManager;
@@ -7,6 +8,7 @@ import com.venom.venomcore.plugin.external.placeholder.PlaceholderManager;
 import com.venom.venomcore.plugin.external.protection.ProtectionManager;
 import com.venom.venomcore.plugin.external.skyblock.SkyBlockManager;
 import com.venom.venomcore.plugin.menu.engine.MenuListener;
+import com.venom.venomcore.plugin.nms.NMSManager;
 import com.venom.venomcore.plugin.plugin.settings.Metrics;
 import com.venom.venomcore.plugin.server.ServerVersion;
 import org.bukkit.Bukkit;
@@ -23,6 +25,12 @@ public class VenomCore extends JavaPlugin {
         PlaceholderManager.load(this);
         SkyBlockManager.load(this);
 
+        // Hooks loaded.
+
+        NMSManager.init();
+
+        // NMSManager is initialized.
+
         Bukkit.getPluginManager().registerEvents(new MenuListener(), this);
 
         new Metrics(this, 10314);
@@ -30,13 +38,17 @@ public class VenomCore extends JavaPlugin {
         saveDefaultConfig();
         debug = getConfig().getBoolean("debug");
 
-        if (getConfig().getBoolean("fix_timings") && ServerVersion.isServerVersionHigherOrEqual(ServerVersion.v1_8_R1) && ServerVersion.isServerVersionLowerThan(ServerVersion.v1_9_R1)) {
+        if (getConfig().getBoolean("fix_timings") && ServerVersion.isServerVersion(ServerVersion.v1_8_R1, ServerVersion.v1_8_R2, ServerVersion.v1_8_R3)) {
             TimingsFix timingsFix = new TimingsFix("VenomTimings");
 
             PluginCommand command = getCommand("venomtimings");
-            if (command != null) {
-                command.setExecutor(new TimingsFixCommand(timingsFix));
+
+            if (command == null) {
+                Bukkit.getConsoleSender().sendMessage(Color.translate("&cVenom Timingste bir sorun oluştu!"));
+                return;
             }
+
+            command.setExecutor(new TimingsFixCommand(timingsFix));
         }
     }
 }
