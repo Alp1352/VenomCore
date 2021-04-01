@@ -77,4 +77,4 @@ dependencies {
 ```
 ## License
 
-- This project is open source, and is being distributed under the GPL v3 License. This project also contains third party code. See details below.
+- This project is open source, and is being distributed under the GPL v3 License. This project also contains third party code. See third party text file.
