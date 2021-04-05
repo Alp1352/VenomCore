@@ -8,7 +8,6 @@ import com.venom.venomcore.plugin.chat.Color;
 import com.venom.venomcore.plugin.compatibility.CompatibleMaterial;
 import com.venom.venomcore.plugin.nms.NMSManager;
 import com.venom.venomcore.plugin.server.ServerVersion;
-import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;

@@ -11,8 +11,10 @@ import java.util.stream.Collectors;
 
 public class JobsRebornHook extends JobsHook {
     @Override
-    public List<String> getJobs() {
-        return Jobs.getJobs().stream().map(Job::getName).collect(Collectors.toList());
+    public List<String> getAll() {
+        return Jobs.getJobs().stream()
+                .map(Job::getName)
+                .collect(Collectors.toList());
     }
 
     @Override

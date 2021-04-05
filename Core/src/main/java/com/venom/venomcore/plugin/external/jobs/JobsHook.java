@@ -6,7 +6,7 @@ import org.bukkit.entity.Player;
 import java.util.List;
 
 public abstract class JobsHook implements Hook {
-    public abstract List<String> getJobs();
+    public abstract List<String> getAll();
 
     public abstract JobsPlayerHook getJobsPlayerHook(Player p);
 }

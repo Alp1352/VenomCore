@@ -7,10 +7,12 @@ import de.leonhard.storage.internal.settings.ConfigSettings;
 import de.leonhard.storage.internal.settings.DataType;
 import de.leonhard.storage.internal.settings.ReloadSettings;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -72,6 +74,25 @@ public class Locale {
             String localeName = withExtension(name);
             InputStream stream = plugin.getResource(localeName);
             copyLocale(plugin, stream, localeName);
+        }
+    }
+
+    public static void copyAllLocales(VenomPlugin plugin) {
+        URL url = plugin
+                .getClass()
+                .getClassLoader()
+                .getResource("locales");
+
+        if (url == null) return;
+
+        String directoryPath = url.getFile();
+
+        File directory = new File(directoryPath);
+        File[] files = directory.listFiles();
+
+        for (File file : files) {
+            String name = FilenameUtils.removeExtension(file.getName());
+            copyLocales(plugin, name);
         }
     }
 

@@ -1,5 +1,6 @@
 package com.venom.venomcore.plugin.external;
 
+import com.google.common.collect.Iterables;
 import com.venom.venomcore.plugin.plugin.VenomPlugin;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -10,40 +11,30 @@ import java.util.stream.Collectors;
  * A class for managing hooks.
  * @param <T> The abstract class for hooks.
  */
+@SuppressWarnings({"unused", "unchecked"})
 public class HookManager<T extends Hook> {
-
-    private final Class<?> generic;
-    private T current;
-
-    private Collection<T> VALUES;
 
     private final Map<PluginHook<?>, T> registered = new HashMap<>();
     private final Map<JavaPlugin, T> preferred = new HashMap<>();
-    private final Set<JavaPlugin> loaded = new HashSet<>();
+    private final Class<?> generic;
+
+    private T current;
 
     public HookManager(Class<?> generic) {
         this.generic = generic;
     }
+
     /**
      * Loads all the hooks.
-     * @param plugin The plugin loading.
      */
-    public void load(JavaPlugin plugin) {
-        if (loaded.contains(plugin))
-            return;
-
-        registered.putAll(PluginHook.loadAll(generic, plugin)
+    public void load() {
+        registered.putAll(PluginHook.loadAll(generic)
                 .entrySet()
                 .stream()
-                .collect(Collectors.toMap(Map.Entry::getKey, e -> (T) e.getValue())));
+                .collect(Collectors.toMap(Map.Entry::getKey, entry -> (T) entry.getValue()))
+        );
 
-        VALUES = registered.values();
-
-        if (!VALUES.isEmpty()) {
-            current = VALUES.iterator().next();
-        }
-
-        loaded.add(plugin);
+        current = Iterables.get(registered.values(), 0, null);
     }
 
     /**
@@ -72,17 +63,13 @@ public class HookManager<T extends Hook> {
      * @param plugin The plugin to set.
      * @return True if preferred hook is set.
      */
-    public boolean setPreferredHook(VenomPlugin venomPlugin, PluginHook<?> plugin) {
-        return setPreferredHook(venomPlugin, getHook(plugin));
+    public boolean setPreferredHook(VenomPlugin plugin, PluginHook<?> hook) {
+        return setPreferredHook(plugin, getHook(hook));
     }
 
     private boolean setPreferredHook(VenomPlugin plugin, T hook) {
-        if (hook != null) {
-            preferred.put(plugin, hook);
-            return true;
-        }
-
-        return false;
+        preferred.put(plugin, hook);
+        return hook != null && hook.isEnabled();
     }
 
     /**
@@ -91,13 +78,7 @@ public class HookManager<T extends Hook> {
      * @return The hook.
      */
     public T getHook(String name) {
-        for (PluginHook<?> pluginHook : registered.keySet()) {
-            if (pluginHook.getPluginName().equalsIgnoreCase(name)) {
-                return getHook(pluginHook);
-            }
-        }
-
-        return null;
+        return getHook(PluginHook.getHook(name));
     }
 
     /**
@@ -114,7 +95,7 @@ public class HookManager<T extends Hook> {
      * @return All enabled hooks.
      */
     public Collection<T> getRegisteredHooks() {
-        return Collections.unmodifiableCollection(VALUES);
+        return Collections.unmodifiableCollection(registered.values());
     }
 
     /**
@@ -171,8 +152,8 @@ public class HookManager<T extends Hook> {
      * or not.
      * @return True if the manager is loaded.
      */
-    public boolean isLoaded(JavaPlugin plugin) {
-        return loaded.contains(plugin);
+    public boolean isLoaded() {
+        return current != null;
     }
 
     /**

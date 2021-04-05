@@ -15,7 +15,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.concurrent.Executor;
-
+@SuppressWarnings("unused")
 public abstract class VenomPlugin extends JavaPlugin {
     private final ConsoleCommandSender sender = Bukkit.getConsoleSender();
     private Yaml menuConfiguration;
@@ -50,7 +50,7 @@ public abstract class VenomPlugin extends JavaPlugin {
             sender.sendMessage(ChatColor.GRAY + "Dil dosyasi " + ChatColor.WHITE + localeName + ChatColor.GRAY + " ile yuklendi!");
             onVenomPluginEnable();
         } catch (Exception x) {
-            if (VenomCore.debug) {
+            if (VenomCore.DEBUG) {
                 x.printStackTrace();
                 return;
             }
@@ -78,7 +78,7 @@ public abstract class VenomPlugin extends JavaPlugin {
         try {
             onVenomPluginDisable();
         } catch (Throwable x) {
-            if (VenomCore.debug) {
+            if (VenomCore.DEBUG) {
                 x.printStackTrace();
                 return;
             }
@@ -102,14 +102,17 @@ public abstract class VenomPlugin extends JavaPlugin {
         if (settings.isMetrics()) {
             new Metrics(this, settings.getMetricsID());
         }
-        if (settings.isVersionChecker()) {
-            // TODO Add version checker.
-        }
+        /* TODO Add version checker.
+         if (settings.isVersionChecker()) {
+
+         }
+        */
     }
 
     private void checkDependencies() {
         for (Dependency dependency : dependencyManager.getAllDependencies()) {
             DependencyType type = dependencyManager.getType(dependency);
+
             if (dependency.isEnabled()) {
                 if (dependency.isSendingMessage()) {
                     sender.sendMessage(ChatColor.GRAY + dependency.getName() + ChatColor.GREEN + " eklentisine baglanildi!");

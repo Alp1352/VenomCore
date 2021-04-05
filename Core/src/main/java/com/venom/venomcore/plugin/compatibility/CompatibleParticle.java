@@ -94,7 +94,9 @@ public enum CompatibleParticle {
     /// End 1.16 ///
 
     private final ServerVersion since;
-    private String compatibleName;
+    private final String compatibleName;
+
+    public static final CompatibleParticle[] VALUES = values();
 
     /**
      * A compatible particle.
@@ -113,13 +115,8 @@ public enum CompatibleParticle {
      */
     CompatibleParticle(ServerVersion since, String compatibleName, String oneEight) {
         this.since = since;
-        if (isOneEight()) {
-            this.compatibleName = oneEight;
-        } else if (ServerVersion.isServerVersionHigherOrEqual(since)){
-            this.compatibleName = name();
-        } else if (ServerVersion.isServerVersionLowerThan(since)) {
-            this.compatibleName = compatibleName;
-        }
+        this.compatibleName = isOneEight() ? oneEight :
+                ServerVersion.isServerVersionHigherOrEqual(since) ? name() : compatibleName;
     }
 
     /**
@@ -139,6 +136,6 @@ public enum CompatibleParticle {
     }
 
     private static boolean isOneEight() {
-        return ServerVersion.isServerVersion(ServerVersion.v1_8_R1) || ServerVersion.isServerVersion(ServerVersion.v1_8_R2) || ServerVersion.isServerVersion(ServerVersion.v1_8_R3);
+        return ServerVersion.isServerVersion(ServerVersion.v1_8_R1, ServerVersion.v1_8_R2, ServerVersion.v1_8_R3);
     }
 }

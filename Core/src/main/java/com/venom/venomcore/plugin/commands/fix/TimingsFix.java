@@ -76,7 +76,7 @@ public class TimingsFix extends TimingsCommand {
                 timings = new File(timingFolder, "timings" + ++index + ".txt");
             }
 
-            try (PrintStream fileTimings = paste ? new PrintStream(bout) : new PrintStream(timings)){
+            try (PrintStream fileTimings = paste ? new PrintStream(bout) : new PrintStream(timings)) {
 
                 CustomTimingsHandler.printTimings(fileTimings);
                 fileTimings.println("Sample time " + sampleTime + " (" + sampleTime / 1.0E9 + "s)");
@@ -133,8 +133,8 @@ public class TimingsFix extends TimingsCommand {
                 final String pasteID = location.get("key").getAsString();
                 this.sender.sendMessage(ChatColor.GREEN + "Timings sonuçlarına şuradan bakabilirsiniz: https://www.spigotmc.org/go/timings?url=" + pasteID);
             } catch (IOException ex) {
-                this.sender.sendMessage(ChatColor.RED + "Error pasting timings, check your console for more information");
-                Bukkit.getServer().getLogger().log(Level.WARNING, "Could not paste timings", ex);
+                this.sender.sendMessage(ChatColor.RED + "Timings yapıştırılırken bir sorun oluştu. Konsola bakın.");
+                Bukkit.getServer().getLogger().log(Level.WARNING, "Bir sorun oluştu.", ex);
             }
         }
     }

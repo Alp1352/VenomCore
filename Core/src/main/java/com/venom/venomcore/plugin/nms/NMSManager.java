@@ -9,10 +9,13 @@ import com.venom.venomcore.nms.core.inventory.TitleUpdaterCore;
 import com.venom.venomcore.nms.core.nbt.NBTCore;
 import com.venom.venomcore.nms.core.particle.ParticleCore;
 import com.venom.venomcore.plugin.server.ServerVersion;
+import org.apache.commons.lang.Validate;
 import org.bukkit.entity.Player;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
+import java.util.concurrent.CompletableFuture;
 
 @SuppressWarnings("unused")
 public class NMSManager {
@@ -26,12 +29,9 @@ public class NMSManager {
     private static TitleUpdaterCore updaterCore;
 
     private static Class<?> PACKET_CLASS;
-    private static Class<?> CRAFT_PLAYER_CLASS;
-
-    private static Method HANDLE_METHOD;
-    private static Method SEND_PACKET_METHOD;
-
-    private static Field CONNECTION_FIELD;
+    private static MethodHandle HANDLE_METHOD;
+    private static MethodHandle SEND_PACKET_METHOD;
+    private static MethodHandle CONNECTION_FIELD;
 
     public static HologramCore getHologram() {
         return hologramCore;
@@ -65,6 +65,11 @@ public class NMSManager {
         return updaterCore;
     }
 
+    /**
+     * Get a NMS class.
+     * @param name The class name to search for.
+     * @return The NMS class.
+     */
     public static Class<?> getNMSClass(String name) {
         try {
             return Class.forName("net.minecraft.server." + ServerVersion.getServerVersion().getNMSVersion() + "." + name);
@@ -74,6 +79,11 @@ public class NMSManager {
         return null;
     }
 
+    /**
+     * Gets a CraftBukkit class.
+     * @param name The class name to search for.
+     * @return The CraftBukkit class.
+     */
     public static Class<?> getCraftBukkitClass(String name) {
         try {
             return Class.forName("org.bukkit.craftbukkit." + ServerVersion.getServerVersion().getNMSVersion() + "." + name);
@@ -83,39 +93,80 @@ public class NMSManager {
         return null;
     }
 
+    /**
+     * Convert a Bukkit player to NMS EntityPlayer.
+     * @param player The player to convert.
+     * @return The NMS EntityPlayer.
+     */
+    public static Object getHandle(Player player) {
+        Validate.notNull(player, "Player cannot be null.");
 
-    public static void sendPacket(Player player, Object packet) {
         try {
-            if(!packet.getClass().isAssignableFrom(PACKET_CLASS)){
-                throw new IllegalArgumentException("The given object is not a packet!");
-            }
+            return HANDLE_METHOD.invoke(player);
+        } catch (Throwable e) {
+            return null;
+        }
+    }
 
-            Object craftPlayer = CRAFT_PLAYER_CLASS.cast(player);
-            Object entityPlayer = HANDLE_METHOD.invoke(craftPlayer);
-            Object connection = CONNECTION_FIELD.get(entityPlayer);
+    /**
+     * Get the connection of a player.
+     * @param player The player to get the connection of.
+     * @return The connection.
+     */
+    public static Object getConnection(Player player) {
+        Validate.notNull(player, "Player cannot be null.");
+        try {
+            Object entityPlayer = getHandle(player);
+            return CONNECTION_FIELD.invoke(entityPlayer);
+        } catch (Throwable e) {
+            return null;
+        }
+    }
+
+    /**
+     * Send a packet synchronously.
+     * @param player The player to send the packet to.ç
+     * @param packet The packet to send.
+     */
+    public static void sendPacketSync(Player player, Object packet) {
+        Validate.isTrue(packet.getClass().isAssignableFrom(PACKET_CLASS), "The given object is not a packet.");
+        Object connection = getConnection(player);
+
+        try {
             SEND_PACKET_METHOD.invoke(connection, packet);
-        } catch (Exception e){
+        } catch (Throwable e){
             e.printStackTrace();
         }
+    }
+
+    /**
+     * Send a packet asynchronously.
+     * Since packets are thread safe, it is safe to call this method.
+     * @param player The player to send the packet to.
+     * @param packet The packet to send.
+     */
+    public static void sendPacket(Player player, Object packet) {
+        CompletableFuture
+                .runAsync(() -> sendPacketSync(player, packet));
     }
 
     public static void init() {
         try {
             ServerVersion version = ServerVersion.getServerVersion();
             String NMS_VERSION = version.getNMSVersion();
-
             PACKET_CLASS = getNMSClass("Packet");
-            CRAFT_PLAYER_CLASS = getCraftBukkitClass("entity.CraftPlayer");
+
+            MethodHandles.Lookup lookup = MethodHandles.lookup();
+
+            Class<?> CRAFT_PLAYER_CLASS = getCraftBukkitClass("entity.CraftPlayer");
             Class<?> ENTITY_PLAYER_CLASS = getNMSClass("EntityPlayer");
+            Class<?> CONNECTION_CLASS = getNMSClass("PlayerConnection");
 
-            HANDLE_METHOD = CRAFT_PLAYER_CLASS.getDeclaredMethod("getHandle");
+            Validate.notNull(PACKET_CLASS); Validate.notNull(ENTITY_PLAYER_CLASS); Validate.notNull(CONNECTION_CLASS); Validate.notNull(CRAFT_PLAYER_CLASS);
 
-            CONNECTION_FIELD = ENTITY_PLAYER_CLASS.getDeclaredField("playerConnection");
-            SEND_PACKET_METHOD = getNMSClass("PlayerConnection").getDeclaredMethod("sendPacket", PACKET_CLASS);
-
-            SEND_PACKET_METHOD.setAccessible(true);
-            HANDLE_METHOD.setAccessible(true);
-            CONNECTION_FIELD.setAccessible(true);
+            HANDLE_METHOD = lookup.findVirtual(CRAFT_PLAYER_CLASS, "getHandle", MethodType.methodType(ENTITY_PLAYER_CLASS));
+            SEND_PACKET_METHOD = lookup.findVirtual(CONNECTION_CLASS, "sendPacket", MethodType.methodType(void.class, PACKET_CLASS));
+            CONNECTION_FIELD = lookup.findGetter(ENTITY_PLAYER_CLASS, "playerConnection", CONNECTION_CLASS);
 
             anvilCore = (AnvilCore) Class.forName("com.venom.venomcore.nms." + NMS_VERSION + ".anvil.AnvilCore").newInstance();
 
@@ -140,6 +191,9 @@ public class NMSManager {
                     (ParticleCore) Class.forName("com.venom.venomcore.nms.common.particles.Particle").newInstance();
 
             updaterCore = (TitleUpdaterCore) Class.forName("com.venom.venomcore.nms." + NMS_VERSION + ".inventory.TitleUpdater").newInstance();
+
+            // Run the static initializer for AnvilView.
+            Class.forName("com.venom.venomcore.nms." + NMS_VERSION + ".anvil.AnvilView");
         } catch (ReflectiveOperationException e) {
             e.printStackTrace();
         }

@@ -8,12 +8,10 @@ import java.util.Map;
 @SuppressWarnings("unused")
 public class LocaleMessage {
     private String text;
-    private String prefix;
+    private final String prefix;
     public LocaleMessage(String text, String prefix) {
         this.text = Color.translate(text);
-        if (prefix != null) {
-            this.prefix = Color.translate(prefix);
-        }
+        this.prefix = prefix != null ? Color.translate(prefix) : null;
     }
 
     /**
@@ -22,7 +20,7 @@ public class LocaleMessage {
      * @return The locale message with placeholders.
      */
     public LocaleMessage setPlaceholders(Map<String, String> map) {
-        if (map == null)
+        if (map == null || map.isEmpty())
             return this;
 
         for (Map.Entry<String, String> entr : map.entrySet()) {

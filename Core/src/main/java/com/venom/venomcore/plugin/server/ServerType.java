@@ -1,14 +1,16 @@
 package com.venom.venomcore.plugin.server;
 
+import org.apache.commons.lang.ArrayUtils;
 import org.bukkit.Bukkit;
 
-import java.util.Arrays;
-
 public enum ServerType {
-    SPIGOT,
     CRAFT_BUKKIT,
+    SPIGOT,
     PAPER,
     TACO,
+    TUINITY,
+    AIRPLANE,
+    PURPUR,
     IMANITY,
     UNKNOWN;
 
@@ -56,15 +58,18 @@ public enum ServerType {
     }
 
     public static boolean isServerType(ServerType... types) {
-        return Arrays.stream(types)
-                .anyMatch(ServerType::isServerType);
+        return ArrayUtils.contains(types, SERVER_TYPE);
     }
 
     public static boolean isSupported() {
-        return (getServerType() != UNKNOWN);
+        return !isServerType(ServerType.UNKNOWN);
     }
 
-    public static boolean isAsync() {
-        return getServerType() == PAPER || getServerType() == IMANITY;
+    public static boolean isStarlightEngine() {
+        return isServerType(ServerType.TUINITY, ServerType.AIRPLANE, ServerType.PURPUR);
+    }
+
+    public static boolean isAsyncChunkEngine() {
+        return isServerType(ServerType.PAPER, ServerType.TACO, ServerType.IMANITY, ServerType.TUINITY, ServerType.AIRPLANE, ServerType.PURPUR);
     }
 }

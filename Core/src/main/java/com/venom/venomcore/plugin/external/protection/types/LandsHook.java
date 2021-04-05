@@ -9,11 +9,7 @@ import org.bukkit.Location;
 import org.bukkit.entity.Player;
 
 public class LandsHook extends ProtectionHook {
-    private LandsIntegration integration;
-
-    {
-        integration = new LandsIntegration(VenomCore.getPlugin(VenomCore.class));
-    }
+    private final LandsIntegration integration = new LandsIntegration(VenomCore.getPlugin(VenomCore.class));
 
     @Override
     public boolean canPlace(Player player, Location location) {

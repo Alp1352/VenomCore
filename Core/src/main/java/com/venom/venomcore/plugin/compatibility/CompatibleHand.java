@@ -3,6 +3,8 @@ package com.venom.venomcore.plugin.compatibility;
 import com.venom.venomcore.plugin.item.ItemBuilder;
 import com.venom.venomcore.plugin.server.ServerVersion;
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
+import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.event.player.PlayerItemBreakEvent;
 import org.bukkit.inventory.EquipmentSlot;
@@ -10,6 +12,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.inventory.meta.Damageable;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.util.Vector;
 
 import java.lang.reflect.Method;
 
@@ -20,8 +23,8 @@ import java.lang.reflect.Method;
  */
 public abstract class CompatibleHand {
 
-    private static final boolean SUPPORT_API = ServerVersion.isServerVersionHigherThan(ServerVersion.v1_8_R3);
-    private static final boolean SUPPORT_DAMAGE = ServerVersion.isServerVersionHigherThan(ServerVersion.v1_12_R1);
+    private static final boolean SUPPORT_API = ServerVersion.isServerVersionHigherOrEqual(ServerVersion.v1_9_R1);
+    private static final boolean SUPPORT_DAMAGE = ServerVersion.isServerVersionHigherOrEqual(ServerVersion.v1_13_R1);
     private final Player p;
 
     protected CompatibleHand(Player p) {
@@ -48,7 +51,7 @@ public abstract class CompatibleHand {
      */
     public void takeItem(int amount) {
         ItemStack item = getItem();
-        if (!SUPPORT_API || item == null)
+        if (item == null)
             return;
 
         int left = item.getAmount() - amount;
@@ -63,6 +66,7 @@ public abstract class CompatibleHand {
     /**
      * Takes one item in the players hand.
      * If the amount becomes 0, it removes the item.
+     * Uses the{@link #takeItem(int) takeItem} to take one item.
      */
     public void takeItem() {
         takeItem(1);
@@ -109,7 +113,12 @@ public abstract class CompatibleHand {
         if (item == null)
             return;
 
-        p.getWorld().dropItemNaturally(p.getLocation().clone().add(p.getLocation().getDirection().multiply(2)), item);
+        Location location = p.getLocation().clone();
+        Vector direction = location.getDirection().clone();
+        World world = p.getWorld();
+
+        world.dropItemNaturally(location.add(direction.multiply(2)), item);
+
         removeItem();
     }
 
@@ -149,11 +158,7 @@ public abstract class CompatibleHand {
      * @return The hand instance.
      */
     public static CompatibleHand getHandOf(Player p, HandType type) {
-        if (type == HandType.MAIN_HAND) {
-            return new MainHand(p);
-        } else {
-            return new OffHand(p);
-        }
+        return type == HandType.MAIN_HAND ? new MainHand(p) : new OffHand(p);
     }
 
     /**
@@ -171,19 +176,14 @@ public abstract class CompatibleHand {
         Class<?> clazz = event.getClass();
         try {
             Method method = clazz.getMethod("getHand");
+            method.setAccessible(true);
             slot = (EquipmentSlot) method.invoke(event);
         } catch (Exception e) {
             e.printStackTrace();
             return null;
         }
 
-        if (slot == EquipmentSlot.HAND) {
-            type = HandType.MAIN_HAND;
-        } else if (SUPPORT_API && slot == EquipmentSlot.OFF_HAND) {
-            type = HandType.OFF_HAND;
-        } else {
-            return null;
-        }
+        type = (slot == EquipmentSlot.HAND) ? HandType.MAIN_HAND : HandType.OFF_HAND;
         return getHandOf(p, type);
     }
 
@@ -191,7 +191,7 @@ public abstract class CompatibleHand {
      * Gets the used hand in an event.
      * The player of the event will be used, so
      * if you want to specify the player,
-     * use the other method.
+     * use the {@link #getUsedHandIn(Player, Object) getUsedHandIn} method.
      * @param event The event.
      * @return The hand instance.
      */
@@ -200,6 +200,7 @@ public abstract class CompatibleHand {
         Class<?> clazz = event.getClass();
         try {
             Method method = clazz.getMethod("getPlayer");
+            method.setAccessible(true);
             p = (Player) method.invoke(event);
         } catch (Exception e) {
             e.printStackTrace();
@@ -237,10 +238,7 @@ public abstract class CompatibleHand {
         }
 
         public ItemStack getItem() {
-            if (SUPPORT_API) {
-                return inv.getItemInOffHand();
-            }
-            return null;
+            return SUPPORT_API ? inv.getItemInOffHand() : null;
         }
     }
 
@@ -264,11 +262,7 @@ public abstract class CompatibleHand {
         }
 
         public ItemStack getItem() {
-            if (SUPPORT_API) {
-                return inv.getItemInMainHand();
-            } else {
-                return inv.getItemInHand();
-            }
+            return SUPPORT_API ? inv.getItemInMainHand() : inv.getItemInHand();
         }
     }
 }

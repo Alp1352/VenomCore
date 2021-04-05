@@ -4,19 +4,9 @@ import com.venom.venomcore.plugin.external.economy.EconomyHook;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
-import org.bukkit.plugin.RegisteredServiceProvider;
 
 public class VaultHook extends EconomyHook {
-    private final Economy econ;
-
-    {
-        RegisteredServiceProvider<Economy> serviceProvider = Bukkit.getServicesManager().getRegistration(Economy.class);
-        if (serviceProvider.getProvider() != null) {
-            econ = serviceProvider.getProvider();
-        } else {
-            econ = null;
-        }
-    }
+    private final Economy econ = Bukkit.getServicesManager().getRegistration(Economy.class).getProvider();
 
     @Override
     public boolean deposit(OfflinePlayer p, double amount) {

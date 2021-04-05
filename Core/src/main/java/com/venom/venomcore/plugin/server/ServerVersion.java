@@ -1,8 +1,7 @@
 package com.venom.venomcore.plugin.server;
 
+import org.apache.commons.lang.ArrayUtils;
 import org.bukkit.Bukkit;
-
-import java.util.Arrays;
 
 public enum ServerVersion {
     v1_7_R4("1.7.10"),
@@ -66,7 +65,7 @@ public enum ServerVersion {
     }
 
     public static boolean isServerVersion(ServerVersion... versions) {
-        return Arrays.asList(versions).contains(version);
+        return ArrayUtils.contains(versions, version);
     }
 
     public static boolean isServerVersionLowerThan(ServerVersion version) {
@@ -93,5 +92,8 @@ public enum ServerVersion {
         return getServerVersion().isLegacy();
     }
 
+    public static boolean isOneEight() {
+        return isServerVersion(ServerVersion.v1_8_R1, ServerVersion.v1_8_R2, ServerVersion.v1_8_R3);
+    }
 
 }
