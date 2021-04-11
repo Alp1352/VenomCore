@@ -176,7 +176,7 @@ public class Locale {
      * @return The folder.
      */
     private static File getLocalesFolder(VenomPlugin plugin) {
-        return new File(plugin.getDataFolder(), "/locales");
+        return new File(plugin.getDataFolder(), File.separator + "locales");
     }
 
 

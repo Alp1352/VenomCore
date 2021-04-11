@@ -15,6 +15,8 @@ import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.concurrent.Executor;
+import java.util.logging.Level;
+
 @SuppressWarnings("unused")
 public abstract class VenomPlugin extends JavaPlugin {
     private final ConsoleCommandSender sender = Bukkit.getConsoleSender();
@@ -28,7 +30,7 @@ public abstract class VenomPlugin extends JavaPlugin {
 
     @Override
     public void onEnable() {
-        loadDependencies();
+        loadCustomDependencies();
         settings = new PluginSettings();
         dependencyManager = new DependencyManager();
         executor = new BukkitExecutor(this);
@@ -62,6 +64,7 @@ public abstract class VenomPlugin extends JavaPlugin {
         }
         sender.sendMessage(ChatColor.GREEN + "=============================");
         sender.sendMessage(" ");
+        VenomCore.LOGGER.log(Level.INFO, getDescription().getName() + " adli eklentiye baglanildi.");
     }
 
     public void disablePlugin() {
@@ -91,10 +94,6 @@ public abstract class VenomPlugin extends JavaPlugin {
         }
         sender.sendMessage(ChatColor.GREEN + "=============================");
         sender.sendMessage(" ");
-    }
-
-    private void loadDependencies() {
-        loadCustomDependencies();
     }
 
     private void checkSettings() {

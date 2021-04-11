@@ -3,22 +3,19 @@ package com.venom.venomcore.plugin.plugin;
 import com.venom.venomcore.plugin.external.dependency.Dependency;
 import com.venom.venomcore.plugin.external.dependency.DependencyType;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class DependencyManager {
 
-    private final Map<Dependency, DependencyType> dependencies = new HashMap<>();
+    private final Map<Dependency, DependencyType> dependencies = new LinkedHashMap<>();
 
     public void addDependency(Dependency dependency, DependencyType type) {
         dependencies.put(dependency, type);
     }
 
-    public List<Dependency> getAllDependencies() {
-        return new ArrayList<>(dependencies.keySet());
+    public Set<Dependency> getAllDependencies() {
+        return Collections.unmodifiableSet(dependencies.keySet());
     }
 
     public List<Dependency> getDependencies(boolean enabled) {

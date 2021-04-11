@@ -150,6 +150,24 @@ public class NMSManager {
                 .runAsync(() -> sendPacketSync(player, packet));
     }
 
+    /**
+     * Send multiple packets asynchronously with order.
+     * If we use {@link #sendPacket(Player, Object)} method for each packet,
+     * Some packets may arrive faster than the others. This can especially be an issue
+     * if you are sending entity spawn and entity metadata packets at the same time.
+     *
+     * @param player The player to send the packets to.
+     * @param packets The packets.
+     */
+    public static void sendPacket(Player player, Object... packets) {
+        CompletableFuture
+                .runAsync(() -> {
+                    for (Object packet : packets) {
+                        sendPacketSync(player, packet);
+                    }
+                });
+    }
+
     public static void init() {
         try {
             ServerVersion version = ServerVersion.getServerVersion();

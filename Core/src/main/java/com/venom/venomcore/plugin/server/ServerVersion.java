@@ -23,20 +23,19 @@ public enum ServerVersion {
     v1_17_R1("1.17.0"),
     UNKNOWN("-1");
 
-    private static ServerVersion version;
+    private static final ServerVersion VERSION;
 
     private final String nmsVersion;
     private final String readable;
 
     static {
+        ServerVersion version;
         try {
             version = ServerVersion.valueOf(Bukkit.getServer().getClass().getPackage().getName().replace(".", ",").split(",")[3]);
-            if (version == ServerVersion.v1_17_R1 || version == ServerVersion.v1_7_R4) {
-                System.out.println("Kullandiginiz surum, suanda desteklenmemektedir.");
-            }
         } catch (IllegalArgumentException e) {
-            version = ServerVersion.UNKNOWN;
+            version = UNKNOWN;
         }
+        VERSION = version;
     }
 
     ServerVersion(String readable) {
@@ -44,56 +43,116 @@ public enum ServerVersion {
         this.readable = readable;
     }
 
+    /**
+     * Get the version in a readable format.
+     * @return The version.
+     */
     public String getReadableVersion() {
         return readable;
     }
 
+    /**
+     * Get the version in NMS format.
+     * i.e. v1_8_R3.
+     * @return The version.
+     */
     public String getNMSVersion() {
         return nmsVersion;
     }
 
+    /**
+     * Check whether the server is legacy or not.
+     * @return True if the server is legacy(Version is lower than 1.13)
+     */
     public boolean isLegacy() {
         return isServerVersionLowerThan(v1_13_R1);
     }
 
+    /**
+     * Get the server version.
+     * @return The server version.
+     */
     public static ServerVersion getServerVersion() {
-        return version;
+        return VERSION;
     }
 
+    /**
+     * Check whether the server version is the given parameter.
+     * @param version The server version to check.
+     * @return True if the server version matches with the given version.
+     */
     public static boolean isServerVersion(ServerVersion version) {
         return getServerVersion() == version;
     }
 
+    /**
+     * Check whether the server version is one of the given parameters.
+     * @param versions The versions.
+     * @return True if given versions contains the server version.
+     */
     public static boolean isServerVersion(ServerVersion... versions) {
-        return ArrayUtils.contains(versions, version);
+        return ArrayUtils.contains(versions, VERSION);
     }
 
+    /**
+     * Check whether the server version is lower than the given version.
+     * @param version The version to check.
+     * @return True if the server version is lower than given version.
+     */
     public static boolean isServerVersionLowerThan(ServerVersion version) {
         return getServerVersion().ordinal() < version.ordinal();
     }
 
+    /**
+     * Check whether the server version is higher than the given version.
+     * @param version The version to check.
+     * @return True if the server version is higher than given version.
+     */
     public static boolean isServerVersionHigherThan(ServerVersion version) {
         return getServerVersion().ordinal() > version.ordinal();
     }
 
+    /**
+     * Check whether the server version is lower or equal to the given version.
+     * @param version The version to check.
+     * @return True if the server version is lower or equal to given version.
+     */
     public static boolean isServerVersionLowerOrEqual(ServerVersion version) {
         return getServerVersion().ordinal() <= version.ordinal();
     }
 
+    /**
+     * Check whether the server version is higher or equal to the given version.
+     * @param version The version to check.
+     * @return True if the server version is higher or equal to given version.
+     */
     public static boolean isServerVersionHigherOrEqual(ServerVersion version) {
         return getServerVersion().ordinal() >= version.ordinal();
     }
 
+    /**
+     * Check if the server version is supported.
+     * @return True if the server version is not the following:
+     * {@link ServerVersion#UNKNOWN}, {@link ServerVersion#v1_17_R1}, {@link ServerVersion#v1_7_R4}.
+     */
     public static boolean isSupported() {
-        return (getServerVersion() != ServerVersion.UNKNOWN) && (getServerVersion() != ServerVersion.v1_7_R4);
+        return !isServerVersion(ServerVersion.UNKNOWN, ServerVersion.v1_7_R4, ServerVersion.v1_17_R1);
     }
 
+    /**
+     * Check if the server is legacy.
+     * @return True if the server is legacy.
+     */
     public static boolean isServerLegacy() {
         return getServerVersion().isLegacy();
     }
 
+    /**
+     * Check if the server is OneEight.
+     * @return True if the server version is one of the following:
+     * {@link ServerVersion#v1_8_R1}, {@link ServerVersion#v1_8_R2}, {@link ServerVersion#v1_8_R3}.
+     */
     public static boolean isOneEight() {
         return isServerVersion(ServerVersion.v1_8_R1, ServerVersion.v1_8_R2, ServerVersion.v1_8_R3);
     }
-
 }

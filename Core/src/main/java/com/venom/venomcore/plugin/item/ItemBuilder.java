@@ -305,16 +305,15 @@ public class ItemBuilder {
      * Sets the skull owner. The player should have played in the server.
      * @param owner The owning player.
      */
-    public void setSkullOwner(Player owner) {
+    public boolean setSkullOwner(Player owner) {
         if (!(itemMeta instanceof SkullMeta))
-            return;
+            return false;
 
         SkullMeta skullMeta = (SkullMeta) itemMeta;
-        if (ServerVersion.isServerVersionLowerThan(ServerVersion.v1_12_R1)) {
-            skullMeta.setOwner(owner.getName());
-        } else {
-            skullMeta.setOwningPlayer(owner);
-        }
+
+        return ServerVersion.isServerVersionLowerThan(ServerVersion.v1_12_R1) ?
+                skullMeta.setOwner(owner.getName()) :
+                skullMeta.setOwningPlayer(owner);
     }
 
     /**
@@ -344,7 +343,10 @@ public class ItemBuilder {
      */
     public void setPlaceholder(Map<String, String> map) {
         if (getLore() != null) {
-            List<String> list = getLore().stream().map(x -> setPlaceholder(x, map)).collect(Collectors.toList());
+            List<String> list = getLore().stream()
+                    .map(x -> setPlaceholder(x, map))
+                    .collect(Collectors.toList());
+
             setLore(list);
         }
         if (getName() != null) {
@@ -372,6 +374,7 @@ public class ItemBuilder {
     }
 
     /**
+     * @deprecated Use the constructor.
      * Generates a skull with base64 encoding.
      * @param base64 The texture.
      * @return The builder instance.

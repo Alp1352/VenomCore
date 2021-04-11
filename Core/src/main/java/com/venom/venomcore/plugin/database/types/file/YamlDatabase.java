@@ -13,6 +13,6 @@ public class YamlDatabase extends FileDatabase {
                 .setConfigSettings(ConfigSettings.SKIP_COMMENTS)
                 .setDataType(DataType.UNSORTED)
                 .setReloadSettings(ReloadSettings.MANUALLY)
-                .createJson());
+                .createYaml());
     }
 }
