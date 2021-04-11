@@ -1,12 +1,10 @@
 package com.venom.venomcore.plugin.menu.types;
 
 import com.venom.venomcore.nms.core.anvil.AnvilContainer;
-import com.venom.venomcore.plugin.item.ItemUtils;
 import com.venom.venomcore.plugin.menu.GUI;
 import com.venom.venomcore.plugin.menu.MenuType;
 import com.venom.venomcore.plugin.menu.engine.MenuHolder;
 import com.venom.venomcore.plugin.menu.internal.containers.Container;
-import com.venom.venomcore.plugin.menu.internal.item.MenuItem;
 import com.venom.venomcore.plugin.menu.internal.item.action.ActionDetails;
 import com.venom.venomcore.plugin.menu.internal.item.action.ClickAction;
 import com.venom.venomcore.plugin.menu.internal.item.action.Result;
@@ -112,19 +110,18 @@ public abstract class AnvilGUI extends GUI {
     @Override
     public void onClick(InventoryClickEvent e) {
         // Check if the player renamed the item.
-        if (e.getSlot() != 2) {
+        if (e.getSlot() != 2 || upperContainer.get(2) != null) {
             super.onClick(e);
             return;
         }
 
-        MenuItem menuItem = getUpperContainer().get(2);
+        if (e.getCurrentItem() == null)
+            return;
 
-        if (e.getCurrentItem() != null && ItemUtils.isEqual(e.getCurrentItem(), menuItem)) {
-            Player player = (Player) e.getWhoClicked();
-            player.playSound(player.getLocation(), sound, 1f, 1f);
+        Player player = (Player) e.getWhoClicked();
+        player.playSound(player.getLocation(), sound, 1f, 1f);
 
-            Result result = action != null ? action.run(new ActionDetails(player, this)) : null;
-            e.setCancelled(result == null || result.isCancelled());
-        }
+        Result result = action != null ? action.run(new ActionDetails(player, this)) : null;
+        e.setCancelled(result == null || result.isCancelled());
     }
 }

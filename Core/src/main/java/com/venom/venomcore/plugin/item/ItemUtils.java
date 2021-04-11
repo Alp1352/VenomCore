@@ -40,10 +40,18 @@ public class ItemUtils {
     }
 
     public static boolean isEqual(ItemStack item, MenuItem menuItem) {
-        return isEqual(menuItem.getItem().toItemStack(), item);
+        if (menuItem != null && menuItem.getItem() != null) {
+            return isEqual(item, menuItem.getItem().toItemStack());
+        }
+
+        return false;
     }
 
     public static boolean isEqual(MenuItem menuItem, MenuItem item) {
-        return menuItem.equals(item);
+        if (menuItem != null && item != null) {
+            return menuItem.equals(item);
+        }
+
+        return false;
     }
 }

@@ -245,7 +245,7 @@ public abstract class GUI {
      * @param gui The new GUI.
      */
     public void switchMenu(Player p, GUI gui) {
-        if (getType() != MenuType.CHEST || getSwitchAnimation() == null) {
+        if (getType() != MenuType.CHEST || gui.getType() != MenuType.CHEST || getSwitchAnimation() == null) {
             gui.construct().open(p);
             return;
         }
