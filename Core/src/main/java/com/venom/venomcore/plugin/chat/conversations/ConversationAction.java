@@ -1,4 +1,4 @@
-package com.venom.venomcore.plugin.chat.conversations.conv;
+package com.venom.venomcore.plugin.chat.conversations;
 
 import org.bukkit.entity.Player;
 

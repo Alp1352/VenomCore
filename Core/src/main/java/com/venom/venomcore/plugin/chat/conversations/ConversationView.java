@@ -1,4 +1,4 @@
-package com.venom.venomcore.plugin.chat.conversations.conv;
+package com.venom.venomcore.plugin.chat.conversations;
 
 import com.venom.venomcore.nms.core.chat.ActionBarCore;
 import com.venom.venomcore.nms.core.chat.TitleCore;
