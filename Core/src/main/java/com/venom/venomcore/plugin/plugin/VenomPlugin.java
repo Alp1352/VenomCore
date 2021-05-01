@@ -7,23 +7,23 @@ import com.venom.venomcore.plugin.external.dependency.DependencyType;
 import com.venom.venomcore.plugin.language.Locale;
 import com.venom.venomcore.plugin.plugin.settings.Metrics;
 import com.venom.venomcore.plugin.task.BukkitExecutor;
-import de.leonhard.storage.Yaml;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.Executor;
 import java.util.logging.Level;
 
 @SuppressWarnings("unused")
 public abstract class VenomPlugin extends JavaPlugin {
     private final ConsoleCommandSender sender = Bukkit.getConsoleSender();
-    private Yaml menuConfiguration;
-    private boolean stop = false;
+    private final Map<Locale.LocaleType, Locale> locales = new HashMap<>();
 
-    private Locale locale;
+    private boolean stop = false;
     private DependencyManager dependencyManager;
     private PluginSettings settings;
     private Executor executor;
@@ -46,11 +46,18 @@ public abstract class VenomPlugin extends JavaPlugin {
                 return;
             }
             setupConfig();
+
             DatabaseType data = loadDatabase();
-            sender.sendMessage(ChatColor.GRAY + "Veritabani " + ChatColor.WHITE +  data.toString() + ChatColor.GRAY + " ile yuklendi!");
+            if (data != null) {
+                sender.sendMessage(ChatColor.GRAY + "Veritabani " + ChatColor.WHITE + data.toString() + ChatColor.GRAY + " ile yuklendi!");
+            }
+
             String localeName = setupLocale();
-            sender.sendMessage(ChatColor.GRAY + "Dil dosyasi " + ChatColor.WHITE + localeName + ChatColor.GRAY + " ile yuklendi!");
-            onVenomPluginEnable();
+            if (localeName != null && !localeName.isEmpty()) {
+                sender.sendMessage(ChatColor.GRAY + "Dil dosyasi " + ChatColor.WHITE + localeName + ChatColor.GRAY + " ile yuklendi!");
+            }
+
+            enable();
         } catch (Exception x) {
             if (VenomCore.DEBUG) {
                 x.printStackTrace();
@@ -79,7 +86,7 @@ public abstract class VenomPlugin extends JavaPlugin {
         sender.sendMessage(ChatColor.GRAY + "Versiyon: "+ ChatColor.YELLOW +   getDescription().getVersion());
         sender.sendMessage(ChatColor.GRAY + "Aksiyon: " + ChatColor.RED + "Kapatiliyor...");
         try {
-            onVenomPluginDisable();
+            disable();
         } catch (Throwable x) {
             if (VenomCore.DEBUG) {
                 x.printStackTrace();
@@ -90,7 +97,29 @@ public abstract class VenomPlugin extends JavaPlugin {
             sender.sendMessage(ChatColor.GRAY + getDescription().getName() + " kapatilirken hata olustu!");
             sender.sendMessage(ChatColor.GRAY + "Discord sunucumuzdan destek alabilirsiniz.");
             sender.sendMessage(" ");
-            disablePlugin();
+        }
+        sender.sendMessage(ChatColor.GREEN + "=============================");
+        sender.sendMessage(" ");
+    }
+
+    public void onReload() {
+        sender.sendMessage(" ");
+        sender.sendMessage(ChatColor.GREEN + "=============================");
+        sender.sendMessage(ChatColor.GRAY + getDescription().getName() + ChatColor.DARK_GREEN + " by VenomWorkshop <3!");
+        sender.sendMessage(ChatColor.GRAY + "Versiyon: "+ ChatColor.YELLOW +   getDescription().getVersion());
+        sender.sendMessage(ChatColor.GRAY + "Aksiyon: " + ChatColor.AQUA + "Yenileniyor...");
+        try {
+            reload();
+        } catch (Throwable x) {
+            if (VenomCore.DEBUG) {
+                x.printStackTrace();
+                return;
+            }
+
+            sender.sendMessage(" ");
+            sender.sendMessage(ChatColor.GRAY + getDescription().getName() + " yenilenirken hata olustu!");
+            sender.sendMessage(ChatColor.GRAY + "Discord sunucumuzdan destek alabilirsiniz.");
+            sender.sendMessage(" ");
         }
         sender.sendMessage(ChatColor.GREEN + "=============================");
         sender.sendMessage(" ");
@@ -141,20 +170,12 @@ public abstract class VenomPlugin extends JavaPlugin {
         }
     }
 
-    public Locale getLocale() {
-        return locale;
+    public Locale getLocale(Locale.LocaleType type) {
+        return locales.get(type);
     }
 
     public void setLocale(Locale locale) {
-        this.locale = locale;
-    }
-
-    public Yaml getMenuConfiguration() {
-        return menuConfiguration;
-    }
-
-    public void setMenuConfiguration(Yaml yaml) {
-        this.menuConfiguration = yaml;
+        locales.put(locale.getType(), locale);
     }
 
     public void register(Listener listener) {
@@ -190,9 +211,11 @@ public abstract class VenomPlugin extends JavaPlugin {
      */
     public abstract void setupConfig();
 
-    public abstract void onVenomPluginDisable();
+    public abstract void disable();
 
-    public abstract void onVenomPluginEnable();
+    public abstract void enable();
+
+    public void reload() {}
 
     /**
      * Setup the settings of the plugin.

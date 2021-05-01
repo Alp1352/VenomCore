@@ -3,7 +3,6 @@ package com.venom.venomcore.plugin.menu.types;
 import com.venom.venomcore.nms.core.anvil.AnvilContainer;
 import com.venom.venomcore.plugin.menu.GUI;
 import com.venom.venomcore.plugin.menu.MenuType;
-import com.venom.venomcore.plugin.menu.engine.MenuHolder;
 import com.venom.venomcore.plugin.menu.internal.containers.Container;
 import com.venom.venomcore.plugin.menu.internal.item.action.ActionDetails;
 import com.venom.venomcore.plugin.menu.internal.item.action.ClickAction;
@@ -49,7 +48,7 @@ public abstract class AnvilGUI extends GUI {
     public void open(Player p) {
         viewers.add(p);
 
-        container = NMSManager.getAnvil().createAnvil(p, new MenuHolder(this), title);
+        container = NMSManager.getAnvil().createAnvil(p, this, title);
         upperInventory = container.toBukkit();
 
         construct();
@@ -121,7 +120,7 @@ public abstract class AnvilGUI extends GUI {
         Player player = (Player) e.getWhoClicked();
         player.playSound(player.getLocation(), sound, 1f, 1f);
 
-        Result result = action != null ? action.run(new ActionDetails(player, this)) : null;
+        Result result = action != null ? action.run(new ActionDetails(player, e.getSlot(), this)) : null;
         e.setCancelled(result == null || result.isCancelled());
     }
 }

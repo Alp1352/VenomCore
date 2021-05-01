@@ -25,6 +25,7 @@ public class VenomCore extends JavaPlugin {
     public static boolean DEBUG;
     public static boolean VENOM_TIMINGS;
     public static Logger LOGGER;
+
     @Override
     public void onEnable() {
         long before = System.currentTimeMillis();

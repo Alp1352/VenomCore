@@ -27,7 +27,7 @@ public abstract class CompatibleHand {
     private static final boolean SUPPORT_DAMAGE = ServerVersion.isServerVersionHigherOrEqual(ServerVersion.v1_13_R1);
     private final Player p;
 
-    protected CompatibleHand(Player p) {
+    private CompatibleHand(Player p) {
         this.p = p;
     }
 

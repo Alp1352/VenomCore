@@ -3,7 +3,6 @@ package com.venom.venomcore.plugin.menu.types.chest;
 import com.venom.venomcore.plugin.chat.Color;
 import com.venom.venomcore.plugin.menu.GUI;
 import com.venom.venomcore.plugin.menu.MenuType;
-import com.venom.venomcore.plugin.menu.engine.MenuHolder;
 import com.venom.venomcore.plugin.menu.internal.containers.Container;
 import com.venom.venomcore.plugin.menu.internal.utils.MenuUtils;
 import com.venom.venomcore.plugin.plugin.VenomPlugin;
@@ -20,7 +19,7 @@ public abstract class SimpleGUI extends GUI {
 
     public SimpleGUI(VenomPlugin plugin,  String menuName, String title, int size) {
         super(plugin, menuName);
-        this.upperInventory = Bukkit.createInventory(new MenuHolder(this), size, Color.translate(title));
+        this.upperInventory = Bukkit.createInventory(this, size, Color.translate(title));
         this.upperContainer = new Container(size);
     }
 

@@ -4,6 +4,7 @@ import net.md_5.bungee.api.chat.BaseComponent;
 import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.HoverEvent;
 import net.md_5.bungee.api.chat.TextComponent;
+import net.md_5.bungee.api.chat.hover.content.Text;
 import org.bukkit.entity.Player;
 
 import java.util.Arrays;
@@ -26,7 +27,7 @@ public class CustomMessage {
      * @param value The value. i.e. The url.
      */
     public void setClickAction(ClickEvent.Action action, String value) {
-        this.text.setClickEvent(new ClickEvent(action, value));
+        text.setClickEvent(new ClickEvent(action, value));
     }
 
     /**
@@ -35,14 +36,14 @@ public class CustomMessage {
      * @param values The value. i.e. The hover text.
      */
     public void setHoverAction(HoverEvent.Action action, String... values) {
-        BaseComponent[] array = new BaseComponent[values.length];
+        Text[] array = new Text[values.length];
 
         Arrays.stream(values)
-                .map(TextComponent::new)
+                .map(Text::new)
                 .collect(Collectors.toList())
                 .toArray(array);
 
-        this.text.setHoverEvent(new HoverEvent(action, array));
+        text.setHoverEvent(new HoverEvent(action, array));
     }
 
     /**

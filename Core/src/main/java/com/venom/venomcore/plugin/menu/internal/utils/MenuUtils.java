@@ -1,15 +1,19 @@
 package com.venom.venomcore.plugin.menu.internal.utils;
 
+import com.google.common.collect.ImmutableMap;
 import com.venom.venomcore.plugin.chat.Color;
 import com.venom.venomcore.plugin.compatibility.CompatibleMaterial;
 import com.venom.venomcore.plugin.compatibility.CompatibleSound;
 import com.venom.venomcore.plugin.item.ItemBuilder;
+import com.venom.venomcore.plugin.language.Locale;
 import com.venom.venomcore.plugin.menu.GUI;
 import com.venom.venomcore.plugin.menu.internal.animations.Frame;
 import com.venom.venomcore.plugin.menu.internal.containers.Container;
 import com.venom.venomcore.plugin.menu.internal.item.MenuItem;
 import com.venom.venomcore.plugin.menu.internal.item.action.ClickAction;
+import com.venom.venomcore.plugin.menu.internal.item.action.Result;
 import com.venom.venomcore.plugin.plugin.VenomPlugin;
+import de.leonhard.storage.Yaml;
 import de.leonhard.storage.sections.FlatFileSection;
 import org.bukkit.event.inventory.ClickType;
 
@@ -21,19 +25,23 @@ import java.util.stream.Collectors;
 
 @SuppressWarnings("unused")
 public class MenuUtils {
+    private static final Locale.LocaleType TYPE = Locale.LocaleType.MENU;
     private final VenomPlugin plugin;
     private final String menuName;
     private final GUI gui;
+    private final Yaml menus;
     public MenuUtils(VenomPlugin plugin, String menuName, GUI gui) {
         this.plugin = plugin;
         this.menuName = menuName;
         this.gui = gui;
+        this.menus = plugin.getLocale(TYPE)
+                .toYaml();
     }
 
     // Decorations start
     public List<ConfigItem> getDecorations() {
         List<ConfigItem> items = new ArrayList<>();
-        FlatFileSection section = plugin.getMenuConfiguration().getSection(menuName + ".items.decorations");
+        FlatFileSection section = menus.getSection(menuName + ".items.decorations");
         for (String key : section.singleLayerKeySet()) {
             MenuItem item = new MenuItem(getItem("decorations." + key));
             Object slotObj = section.get(key + ".slot");
@@ -73,7 +81,7 @@ public class MenuUtils {
         setupItem(itemName, new HashMap<>(), action);
     }
 
-    public void setupItem(String itemName, HashMap<String, String> placeholders, ClickAction action) {
+    public void setupItem(String itemName, Map<String, String> placeholders, ClickAction action) {
         setupItem(gui.getUpperContainer(), itemName, placeholders, action);
     }
 
@@ -81,11 +89,11 @@ public class MenuUtils {
         setupItem(container, itemName, new HashMap<>(), action);
     }
 
-    public void setupItem(Container container, String itemName, HashMap<String, String> placeholders, ClickAction action) {
+    public void setupItem(Container container, String itemName, Map<String, String> placeholders, ClickAction action) {
         setupItem(container, itemName, placeholders, action, getSlotOf(itemName));
     }
 
-    public void setupItem(Container container, String itemName, HashMap<String, String> placeholders, ClickAction action, int slot) {
+    public void setupItem(Container container, String itemName, Map<String, String> placeholders, ClickAction action, int slot) {
         MenuItem menuItem = new MenuItem(getItem(itemName, placeholders));
         menuItem.addAction(action, ClickType.LEFT, ClickType.RIGHT);
         menuItem.setSound(CompatibleSound.BLOCK_NOTE_BLOCK_HAT.parseSound());
@@ -95,12 +103,24 @@ public class MenuUtils {
         container.set(menuItem, slot);
     }
 
+    public void setupExit(GUI gui) {
+        setupExit(gui, "exit");
+    }
+
+    public void setupExit(GUI gui, String name) {
+        setupItem(name, details -> {
+            GUI clicked = details.getGui();
+            clicked.switchMenu(details.getPlayer(), gui);
+            return Result.DENY_CLICK;
+        });
+    }
+
     // Setup Item End
 
     // Item slot start
 
     public int getSlotOf(String itemName) {
-        return plugin.getMenuConfiguration().getInt(menuName + ".items." + itemName + ".slot");
+        return menus.getInt(menuName + ".items." + itemName + ".slot");
     }
 
     // Item slot end
@@ -112,10 +132,10 @@ public class MenuUtils {
     }
 
     public Frame getFrame(Container container, String animationName) {
-        FlatFileSection section = plugin.getMenuConfiguration().getSection(menuName);
+        FlatFileSection section = menus.getSection(menuName);
         Frame frame = new Frame(container, section.getInt("animations.slot"));
 
-        FlatFileSection loopSection = plugin.getMenuConfiguration().getSection(menuName + ".animations." + animationName);
+        FlatFileSection loopSection = menus.getSection(menuName + ".animations." + animationName);
         for (String s : loopSection.singleLayerKeySet()) {
             ItemBuilder builder;
             if (!section.getString("animations." + animationName + "." + s + ".material").contains("basehead")) {
@@ -139,16 +159,20 @@ public class MenuUtils {
         return getItem(plugin, menuName, itemName);
     }
 
-    public ItemBuilder getItem(String itemName, HashMap<String, String> placeholders) {
+    public ItemBuilder getItem(String itemName, Map<String, String> placeholders) {
         return getItem(plugin, menuName, itemName, placeholders);
     }
 
-    public static ItemBuilder getItem(VenomPlugin plugin, String menuName, String itemName) {
-        return getItem(plugin, menuName, itemName, new HashMap<>());
+    public ItemBuilder getLocaleItem(String itemName, String localeName) {
+        return getLocaleItem(plugin, menuName, itemName, localeName);
     }
 
-    public static ItemBuilder getItem(VenomPlugin plugin, String menuName, String itemName, HashMap<String, String> placeholders) {
-        FlatFileSection section = plugin.getMenuConfiguration().getSection(menuName);
+    public static ItemBuilder getItem(VenomPlugin plugin, String menuName, String itemName) {
+        return getItem(plugin, menuName, itemName, ImmutableMap.of());
+    }
+
+    public static ItemBuilder getItem(VenomPlugin plugin, String menuName, String itemName, Map<String, String> placeholders) {
+        FlatFileSection section = plugin.getLocale(TYPE).toYaml().getSection(menuName);
         ItemBuilder builder;
         if (!section.getString("items." + itemName + ".material").contains("basehead")) {
             builder = new ItemBuilder(CompatibleMaterial.matchCompatibleMaterial(section.getString("items." + itemName + ".material") + ":" + section.getInt("items." + itemName + ".data")).orElse(CompatibleMaterial.BEDROCK).parseItem());
@@ -160,6 +184,17 @@ public class MenuUtils {
         builder.setLore(section.getStringList("items." + itemName + ".lore"));
         builder.setAmount(section.getInt("items." + itemName + ".amount"));
         return setPlaceholder(builder, placeholders);
+    }
+
+    public static ItemBuilder getLocaleItem(VenomPlugin plugin, String menuName, String itemName, String localeName) {
+        FlatFileSection section = plugin.getLocale(TYPE).toYaml().getSection(menuName);
+
+        ItemBuilder builder = new ItemBuilder(Locale.getHeadOf(localeName));
+        builder.setName(Color.translate(section.getString("items." + itemName + ".name")));
+        builder.setLore(section.getStringList("items." + itemName + ".lore"));
+        builder.setAmount(section.getInt("items." + itemName + ".amount"));
+
+        return builder;
     }
 
     // Get Item End
@@ -191,11 +226,15 @@ public class MenuUtils {
     }
 
     public static String getTitle(VenomPlugin plugin, String menuName) {
-        return Color.translate(plugin.getMenuConfiguration().getString(menuName + ".title"));
+        return Color.translate(plugin.getLocale(TYPE)
+                .toYaml()
+                .getString(menuName + ".title"));
     }
 
     public static int getSize(VenomPlugin plugin, String menuName) {
-        return plugin.getMenuConfiguration().getInt(menuName + ".slot");
+        return plugin.getLocale(TYPE)
+                .toYaml()
+                .getInt(menuName + ".slot");
     }
 
     public static class ConfigItem {

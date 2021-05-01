@@ -6,10 +6,16 @@ public class ActionDetails {
     private final Player player;
     private boolean itemForClickCancelled = false;
     private final GUI gui;
+    private final int slot;
 
-    public ActionDetails(Player player, GUI gui) {
+    public ActionDetails(Player player, int slot, GUI gui) {
         this.player = player;
         this.gui = gui;
+        this.slot = slot;
+    }
+
+    public int getClickedSlot() {
+        return slot;
     }
 
     public GUI getGui() {

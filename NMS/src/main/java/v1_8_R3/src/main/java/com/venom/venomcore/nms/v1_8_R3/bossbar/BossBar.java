@@ -7,7 +7,7 @@ import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.craftbukkit.v1_8_R3.CraftWorld;
 import org.bukkit.entity.Player;
-import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.plugin.Plugin;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.UUID;
@@ -20,15 +20,19 @@ import java.util.concurrent.ConcurrentHashMap;
  * A class for sending BossBars in 1.8.8.
  */
 public class BossBar implements com.venom.venomcore.nms.core.bossbar.BossBar {
-    private int percentage;
+    private double percentage;
     private String text;
     private final ConcurrentHashMap<UUID, EntityWither> withers = new ConcurrentHashMap<>();
-    private final JavaPlugin plugin;
-    public BossBar(JavaPlugin plugin, String text, int percentage) {
+    private final Plugin plugin;
+    public BossBar(Plugin plugin, String text, double percentage) {
         this.percentage = percentage;
         this.text = text;
         this.plugin = plugin;
         startTimer();
+
+
+        // Set data watcher 20 to 932 or 893 or 1000
+        // Start using data watcher
     }
 
     public void show() {
@@ -37,10 +41,13 @@ public class BossBar implements com.venom.venomcore.nms.core.bossbar.BossBar {
 
     public void show(Player p) {
         EntityWither wither = new EntityWither(((CraftWorld) p.getWorld()).getHandle());
+
+
+
         wither.setInvisible(true);
         wither.setCustomNameVisible(true);
         wither.setCustomName(ChatColor.translateAlternateColorCodes('&', text));
-        wither.setHealth(percentage * 3);
+        wither.setHealth((float) percentage * 3);
         Location location = getWitherLocation(p);
         wither.setPosition(location.getX(), location.getY(), location.getZ());
 
@@ -48,21 +55,6 @@ public class BossBar implements com.venom.venomcore.nms.core.bossbar.BossBar {
 
         PacketPlayOutSpawnEntityLiving packet = new PacketPlayOutSpawnEntityLiving(wither);
         NMSUtils.sendPacket(NMSUtils.toNMS(p), packet);
-    }
-
-    public void update(String text, int percentage) {
-        this.text = text;
-        this.percentage = percentage;
-        withers.keySet().forEach(uuid -> {
-            Player p = Bukkit.getPlayer(uuid);
-            if (p != null) {
-                EntityWither wither = withers.get(uuid);
-                wither.setCustomName(ChatColor.translateAlternateColorCodes('&', text));
-                wither.setHealth(percentage * 3);
-                PacketPlayOutEntityMetadata packet = new PacketPlayOutEntityMetadata(withers.get(uuid).getId(), wither.getDataWatcher(), false);
-                NMSUtils.sendPacket(NMSUtils.toNMS(p), packet);
-            }
-        });
     }
 
     public void hide() {
@@ -81,9 +73,44 @@ public class BossBar implements com.venom.venomcore.nms.core.bossbar.BossBar {
         withers.remove(p.getUniqueId());
     }
 
+    @Override
+    public void update(String text) {
+        this.text = text;
+        synchronize();
+    }
+
+    @Override
+    public void update(double percentage) {
+        this.percentage = percentage;
+        synchronize();
+    }
+
+    private void synchronize() {
+        withers.keySet().forEach(uuid -> {
+            Player p = Bukkit.getPlayer(uuid);
+            if (p != null) {
+                EntityWither wither = withers.get(uuid);
+                wither.setCustomName(ChatColor.translateAlternateColorCodes('&', text));
+                wither.setHealth((float) percentage * 3);
+                PacketPlayOutEntityMetadata packet = new PacketPlayOutEntityMetadata(withers.get(uuid).getId(), wither.getDataWatcher(), false);
+                NMSUtils.sendPacket(NMSUtils.toNMS(p), packet);
+            }
+        });
+    }
+
+    @Override
+    public double getPercentage() {
+        return percentage;
+    }
+
+    @Override
+    public String getText() {
+        return text;
+    }
+
     private Location getWitherLocation(Player p) {
         Location location = p.getLocation().clone();
-        return location.add(location.getDirection().multiply(20));
+        return location.add(location.getDirection().multiply(32));
     }
 
     private void startTimer() {

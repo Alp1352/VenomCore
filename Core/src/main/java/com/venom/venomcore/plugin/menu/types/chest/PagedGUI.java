@@ -3,7 +3,6 @@ package com.venom.venomcore.plugin.menu.types.chest;
 import com.venom.venomcore.plugin.chat.Color;
 import com.venom.venomcore.plugin.menu.GUI;
 import com.venom.venomcore.plugin.menu.MenuType;
-import com.venom.venomcore.plugin.menu.engine.MenuHolder;
 import com.venom.venomcore.plugin.menu.internal.containers.Container;
 import com.venom.venomcore.plugin.menu.internal.item.MenuItem;
 import com.venom.venomcore.plugin.menu.internal.item.action.ClickAction;
@@ -17,8 +16,10 @@ import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.Inventory;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.IntStream;
 
 /**
  * @author Alp Beji
@@ -45,14 +46,14 @@ public abstract class PagedGUI<Object> extends GUI {
     public PagedGUI(VenomPlugin plugin, String menuName, String title, int size) {
         super(plugin, menuName);
 
-        this.upperInventory = Bukkit.createInventory(new MenuHolder(this), size, Color.translate(title));
+        this.upperInventory = Bukkit.createInventory(this, size, Color.translate(title));
 
         this.upperContainer = new Container(size);
 
         pages.put(PAGE_NUMBER, upperContainer);
 
-        this.backButton = getBackButton();
-        this.nextButton = getNextButton();
+        this.backButton = new MenuItem(getUtils().getItem(getBackName()));
+        this.nextButton = new MenuItem(getUtils().getItem(getNextName()));
 
         ClickAction next = details -> {
             currentPage = currentPage + 1;
@@ -79,7 +80,7 @@ public abstract class PagedGUI<Object> extends GUI {
     @Override
     public void open(Player p) {
         if (isSwitching() && !isItemsPlaced()) {
-            placeItems();
+            place();
         }
 
         super.open(p);
@@ -90,44 +91,53 @@ public abstract class PagedGUI<Object> extends GUI {
         Container container = pages.get(currentPage);
         upperInventory.clear();
 
-        for (int i = 0; i < container.getSize(); i++) {
-            if (container.get(i) == null)
-                continue;
-
-            upperInventory.setItem(i, container.get(i).getItem().toItemStack());
-        }
+        IntStream.range(0, getSize())
+                .filter(container::isFull)
+                .forEach(slot -> upperInventory.setItem(slot, container.get(slot).getItem().toItemStack()));
     }
 
     @Override
     public PagedGUI<Object> construct() {
+        setup();
+
         if (!isItemsPlaced()) {
-            placeItems();
+            place();
         }
-        super.construct();
+
+        if (!isSwitching()) {
+            update();
+        }
+
+        getUpperContainer().getFrames()
+                .forEach(this::runFrame);
+
+        runItemAnimations();
         return this;
     }
 
-    public void placeItems() {
+    public void place() {
         int page = PAGE_NUMBER;
-        List<Object> objects = new ArrayList<>(objectsToPlace());
+        List<Object> objects = new ArrayList<>(objects());
 
         double pageAmount = Math.ceil((double) objects.size() / (double) upperContainer.getFreeSlotCount());
+
         for (int i = 1; i < pageAmount; i++) {
             Container container = new Container(upperContainer.getSize());
             pages.get(PAGE_NUMBER).copy(container);
             pages.put(i, container);
         }
 
-        for (Integer integer : pages.keySet()) {
-            Container currentPage = pages.get(integer);
-            if (pages.get(integer + 1) != null) {
-                currentPage.set(nextButton, nextButtonSlot());
+        pages.keySet().forEach(integer -> {
+            Container current = pages.get(integer);
+
+            if (pages.get(integer + 1) != null) { // There is a next page.
+                current.set(nextButton, getUtils().getSlotOf(getNextName()));
             }
 
-            if (pages.get(integer - 1) != null) {
-                currentPage.set(backButton, backButtonSlot());
+            if (pages.get(integer - 1) != null) { // There is a back page.
+                current.set(backButton, getUtils().getSlotOf(getBackName()));
             }
-        }
+        });
 
 
         Container currentContainer = pages.get(page);
@@ -135,7 +145,7 @@ public abstract class PagedGUI<Object> extends GUI {
         int index = 0;
         while (currentContainer != null && index < objects.size() && currentContainer.getNextFreeSlot() != -1) {
             Object object = objects.get(index);
-            currentContainer.set(getItemForObject(object), currentContainer.getNextFreeSlot());
+            currentContainer.set(getItemFor(object), currentContainer.getNextFreeSlot());
 
             if (currentContainer.getNextFreeSlot() == -1) {
                 page = page + 1;
@@ -172,16 +182,16 @@ public abstract class PagedGUI<Object> extends GUI {
         return itemsPlaced;
     }
 
-    public abstract MenuItem getItemForObject(Object object);
+    public abstract MenuItem getItemFor(Object object);
 
-    public abstract List<Object> objectsToPlace();
+    public abstract Collection<Object> objects();
 
-    public abstract MenuItem getBackButton();
+    public String getBackName() {
+        return "back";
+    }
 
-    public abstract MenuItem getNextButton();
-
-    public abstract int nextButtonSlot();
-
-    public abstract int backButtonSlot();
+    public String getNextName() {
+        return "next";
+    }
 
 }

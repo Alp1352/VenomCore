@@ -11,19 +11,11 @@ import org.bukkit.World;
  * @apiNote List of ids : https://wiki.vg/index.php?title=Protocol&oldid=7368#Particle_2
  */
 public class Particle implements ParticleCore {
-    private static final EnumParticle[] VALUES = EnumParticle.values();
-
     @Override
-    public void spawnParticle(String particle, boolean force, float x, float y, float z, World world, float offSetX, float offSetY, float offSetZ, int data, int count, int... length) {
-        EnumParticle nmsParticle = null;
-        for (EnumParticle value : VALUES) {
-            if (value.b().equals(particle)) {
-                nmsParticle = value;
-                break;
-            }
-        }
+    public void spawnParticle(String particle, boolean force, float x, float y, float z, World world, float offSetX, float offSetY, float offSetZ, int data, int count) {
+        EnumParticle nmsParticle = EnumParticle.valueOf(particle);
 
-        PacketPlayOutWorldParticles packet = new PacketPlayOutWorldParticles(nmsParticle, force, x, y, z, offSetX, offSetY, offSetZ, data, count, length);
+        PacketPlayOutWorldParticles packet = new PacketPlayOutWorldParticles(nmsParticle, force, x, y, z, offSetX, offSetY, offSetZ, data, count);
         NMSUtils.sendPacket(packet);
     }
 }

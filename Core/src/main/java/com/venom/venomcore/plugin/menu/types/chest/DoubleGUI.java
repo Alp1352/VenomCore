@@ -3,9 +3,7 @@ package com.venom.venomcore.plugin.menu.types.chest;
 import com.venom.venomcore.plugin.chat.Color;
 import com.venom.venomcore.plugin.menu.GUI;
 import com.venom.venomcore.plugin.menu.MenuType;
-import com.venom.venomcore.plugin.menu.engine.MenuHolder;
 import com.venom.venomcore.plugin.menu.internal.containers.Container;
-import com.venom.venomcore.plugin.menu.internal.item.MenuItem;
 import com.venom.venomcore.plugin.menu.internal.utils.MenuUtils;
 import com.venom.venomcore.plugin.plugin.VenomPlugin;
 import org.bukkit.Bukkit;
@@ -15,9 +13,11 @@ import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.PlayerInventory;
 
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.IntStream;
 
 /**
  * @author Alp Beji
@@ -33,7 +33,7 @@ public abstract class DoubleGUI extends GUI {
 
     public DoubleGUI(VenomPlugin plugin, String menuName, String title, int size) {
         super(plugin, menuName);
-        this.upperInventory = Bukkit.createInventory(new MenuHolder(this), size, Color.translate(title));
+        this.upperInventory = Bukkit.createInventory(this, size, Color.translate(title));
         this.upperContainer = new Container(size);
         this.lowerContainer = new Container(36);
     }
@@ -44,8 +44,10 @@ public abstract class DoubleGUI extends GUI {
 
     @Override
     public void open(Player p) {
-        items.putIfAbsent(p.getUniqueId(), p.getInventory().getContents().clone());
-        p.getInventory().clear();
+        PlayerInventory inventory = p.getInventory();
+
+        items.putIfAbsent(p.getUniqueId(), inventory.getContents().clone());
+        inventory.clear();
 
         super.open(p);
         update();
@@ -54,20 +56,20 @@ public abstract class DoubleGUI extends GUI {
     @Override
     public void update() {
         super.update();
-        for (int i = 0; i < lowerContainer.getSize(); i++) {
-            MenuItem item = lowerContainer.get(i);
-            if (item != null) {
-                for (Player viewer : viewers) {
-                    viewer.getInventory().setItem(i, item.getItem().toItemStack());
-                }
-            }
-        }
+
+        IntStream.range(0, lowerContainer.getSize())
+                .filter(lowerContainer::isFull)
+                .forEach(slot -> viewers.stream()
+                                .map(HumanEntity::getInventory)
+                                .forEach(inv -> inv.setItem(slot, lowerContainer.get(slot).getItem().toItemStack()))
+                );
     }
 
     @Override
     public void clear() {
         super.clear();
-        getLowerContainer().clear();
+        lowerContainer.clear();
+
         viewers.stream()
                 .map(HumanEntity::getInventory)
                 .forEach(Inventory::clear);
@@ -77,7 +79,9 @@ public abstract class DoubleGUI extends GUI {
     public DoubleGUI construct() {
         super.construct();
 
-        lowerContainer.getFrames().forEach(frame -> runFrame(frame, lowerContainer));
+        lowerContainer.getFrames()
+                .forEach(frame -> runFrame(frame, lowerContainer));
+
         runItemAnimations(lowerContainer);
         return this;
     }

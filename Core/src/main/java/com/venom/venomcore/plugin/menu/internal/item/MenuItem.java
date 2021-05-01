@@ -74,6 +74,14 @@ public class MenuItem {
         return sound;
     }
 
+    public boolean hasAnimation() {
+        return animation != null;
+    }
+
+    public boolean hasSound() {
+        return sound != null;
+    }
+
     @Deprecated
     private String setPlaceholder(String str, Map<String, String> map) {
         if (map == null)

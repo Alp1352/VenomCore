@@ -17,9 +17,9 @@ public class PromptGUI extends AnvilGUI {
         super(plugin, null, title);
         this.prompt = onPrompt;
         this.promptText = promptText;
-        setup();
     }
 
+    @Override
     public void setup() {
         ItemBuilder paper = new ItemBuilder(CompatibleMaterial.PAPER.parseItem());
         paper.setName(Color.translate(promptText));

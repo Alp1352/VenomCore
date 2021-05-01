@@ -20,10 +20,10 @@ public class ConfirmationGUI extends SimpleGUI {
         super(plugin, null, title, 27);
         this.onConfirm = onConfirm;
         this.onDeny = onDeny;
-        setup();
     }
 
-    private void setup() {
+    @Override
+    public void setup() {
         // Emerald
         setupConfirm();
         // Redstone

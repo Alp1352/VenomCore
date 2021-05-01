@@ -1,8 +1,7 @@
 package com.venom.venomcore.plugin.external;
 
 import com.google.common.collect.Iterables;
-import com.venom.venomcore.plugin.plugin.VenomPlugin;
-import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.plugin.Plugin;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -15,7 +14,7 @@ import java.util.stream.Collectors;
 public class HookManager<T extends Hook> {
 
     private final Map<PluginHook<?>, T> registered = new HashMap<>();
-    private final Map<JavaPlugin, T> preferred = new HashMap<>();
+    private final Map<Plugin, T> preferred = new HashMap<>();
     private final Class<?> generic;
 
     private T current;
@@ -42,7 +41,7 @@ public class HookManager<T extends Hook> {
      * @return The current hook. If no enabled plugins were found,
      * returns null.
      */
-    public T getCurrentHook(JavaPlugin plugin) {
+    public T getCurrentHook(Plugin plugin) {
         return preferred.getOrDefault(plugin, current);
     }
 
@@ -54,7 +53,7 @@ public class HookManager<T extends Hook> {
      *             If I want to use Vault, Vault.
      * @return True if preferred hook is set.
      */
-    public boolean setPreferredHook(VenomPlugin plugin, String name) {
+    public boolean setPreferredHook(Plugin plugin, String name) {
         return setPreferredHook(plugin, getHook(name));
     }
 
@@ -63,11 +62,11 @@ public class HookManager<T extends Hook> {
      * @param plugin The plugin to set.
      * @return True if preferred hook is set.
      */
-    public boolean setPreferredHook(VenomPlugin plugin, PluginHook<?> hook) {
+    public boolean setPreferredHook(Plugin plugin, PluginHook<?> hook) {
         return setPreferredHook(plugin, getHook(hook));
     }
 
-    private boolean setPreferredHook(VenomPlugin plugin, T hook) {
+    private boolean setPreferredHook(Plugin plugin, T hook) {
         preferred.put(plugin, hook);
         return hook != null && hook.isEnabled();
     }

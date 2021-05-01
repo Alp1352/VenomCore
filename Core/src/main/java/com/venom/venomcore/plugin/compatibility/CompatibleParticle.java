@@ -1,4 +1,5 @@
 package com.venom.venomcore.plugin.compatibility;
+
 import com.venom.venomcore.plugin.server.ServerVersion;
 
 /**
@@ -133,6 +134,10 @@ public enum CompatibleParticle {
      */
     public ServerVersion getSince() {
         return since;
+    }
+
+    public static CompatibleParticle[] getValues() {
+        return VALUES;
     }
 
     private static boolean isOneEight() {

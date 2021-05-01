@@ -1,5 +1,6 @@
 package com.venom.venomcore.plugin.menu;
 
+import com.venom.venomcore.plugin.compatibility.CompatibleSound;
 import com.venom.venomcore.plugin.item.ItemUtils;
 import com.venom.venomcore.plugin.menu.internal.animations.Animation;
 import com.venom.venomcore.plugin.menu.internal.animations.Frame;
@@ -9,26 +10,26 @@ import com.venom.venomcore.plugin.menu.internal.animations.utils.OpenAnimationUt
 import com.venom.venomcore.plugin.menu.internal.containers.Container;
 import com.venom.venomcore.plugin.menu.internal.item.MenuItem;
 import com.venom.venomcore.plugin.menu.internal.item.action.ActionDetails;
-import com.venom.venomcore.plugin.menu.internal.item.action.ClickAction;
 import com.venom.venomcore.plugin.menu.internal.utils.MenuUtils;
 import com.venom.venomcore.plugin.nms.NMSManager;
 import com.venom.venomcore.plugin.plugin.VenomPlugin;
 import com.venom.venomcore.plugin.task.RepeatingTask;
 import com.venom.venomcore.plugin.task.Task;
 import org.bukkit.Bukkit;
-import org.bukkit.Material;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.IntStream;
 
 /**
  * @author Alp Beji
@@ -36,7 +37,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * The abstract class of all the GUI types.
  */
 @SuppressWarnings("unused")
-public abstract class GUI {
+public abstract class GUI implements InventoryHolder {
 
     private boolean lock = false;
     private boolean closable = true;
@@ -47,7 +48,7 @@ public abstract class GUI {
 
     private SwitchAnimation switchAnimation;
 
-    protected List<Player> viewers = new CopyOnWriteArrayList<>();
+    protected final List<Player> viewers = new CopyOnWriteArrayList<>();
 
     private final MenuUtils utils;
     private final VenomPlugin plugin;
@@ -63,20 +64,20 @@ public abstract class GUI {
      */
     public void open(Player p) {
         p.openInventory(getUpperInventory());
+
         viewers.add(p);
     }
 
     /**
      * Synchronizes the container with the GUI.
-     * Call this method if you set another item in the container
-     * while the GUI is open.
+     * Call this method if you used the {@link Container#set(MenuItem, int)} method.
+     * After calling this, all the updates on the container will be shown to the user.
      */
     public void update() {
-        for (int i = 0; i < getUpperContainer().getSize(); i++) {
-            if (getUpperContainer().get(i) != null) {
-                getUpperInventory().setItem(i, getUpperContainer().get(i).getItem().toItemStack());
-            }
-        }
+        Container container = getUpperContainer();
+        IntStream.range(0, getSize())
+                .filter(container::isFull)
+                .forEach(slot -> getUpperInventory().setItem(slot, container.get(slot).getItem().toItemStack()));
     }
 
     /**
@@ -95,11 +96,15 @@ public abstract class GUI {
      * @return The GUI instance.
      */
     public GUI construct() {
+        setup();
         if (!isSwitching()) {
             update();
         }
-        getUpperContainer().getFrames().forEach(frame -> runFrame(frame, getUpperContainer()));
-        runItemAnimations(getUpperContainer());
+
+        getUpperContainer().getFrames()
+                .forEach(this::runFrame);
+
+        runItemAnimations();
         return this;
     }
 
@@ -107,6 +112,12 @@ public abstract class GUI {
      * @return The inventory of the GUI.
      */
     protected abstract Inventory getUpperInventory();
+
+    @NotNull
+    @Override
+    public Inventory getInventory() {
+        return getUpperInventory();
+    }
 
     /**
      * @return The Container representing the upper inventory.
@@ -130,45 +141,44 @@ public abstract class GUI {
         }
 
         Player p = (Player) e.getWhoClicked();
+        ActionDetails details = new ActionDetails(p, e.getSlot(),this);
 
-        ActionDetails details = new ActionDetails(p, this);
-
-        ClickAction clickAction = item.getAction(e.getClick());
-        boolean cancel = clickAction.run(details).isCancelled();
-        e.setCancelled(cancel);
+        e.setCancelled(
+                item.getAction(e.getClick()) // Get the action.
+                        .run(details) // Run the action. This will return a Result.
+                        .isCancelled() // Check if the click is cancelled. If true, we cancel the event and vice versa.
+        );
 
         p.playSound(p.getLocation(), item.getSound(), 1f, 1f);
 
         MenuItem itemForClick = item.getItemForClick(e.getClick());
         if (itemForClick != null && !details.isItemForClickCancelled()) {
-            getUpperContainer().set(itemForClick, e.getSlot());
+            container.set(itemForClick, e.getSlot());
             update();
         }
     }
 
     private MenuItem loopAndFindItem(Container container, int slot, ItemStack item) {
-        for (Frame frame : container.getFrames()) {
-            if (frame.getSlot() != slot) {
-                continue;
-            }
-
-            for (MenuItem menuItem : frame.getItems()) {
-                if (ItemUtils.isEqual(item, menuItem.getItem().toItemStack())) {
-                    return menuItem;
-                }
-            }
-        }
-
-        return null;
+        return container.getFrames().stream()
+                .filter(frame -> frame.getSlot() == slot)
+                .map(Frame::getItems)
+                .flatMap(Collection::stream)
+                .filter(menuItem -> ItemUtils.isEqual(item, menuItem))
+                .findAny()
+                .orElse(null);
     }
 
     public void onClose(InventoryCloseEvent e) {
         Player p = (Player) e.getPlayer();
-        if (!isClosable() && !isSwitching()) {
-            Bukkit.getScheduler().runTaskLater(plugin, () -> open(p), 10L);
-        } else if (isClosable()) {
+
+        if (isClosable()) {
             viewers.remove(p);
-            tasks.forEach(Task::cancel);
+            if (viewers.isEmpty()) {
+                tasks.forEach(Task::cancel);
+                tasks.clear();
+            }
+        } else if (!isSwitching()) {
+            Bukkit.getScheduler().runTaskLater(plugin, () -> open(p), 10L);
         }
     }
 
@@ -227,7 +237,7 @@ public abstract class GUI {
     }
 
     public List<Player> getViewers() {
-        return new ArrayList<>(viewers);
+        return Collections.unmodifiableList(viewers);
     }
 
     public int getSize() { return getUpperInventory().getSize(); }
@@ -261,12 +271,12 @@ public abstract class GUI {
         getSwitchAnimation().setTargetSize(gui.getSize());
 
         new RepeatingTask(plugin, 0, 1) {
-            int ticks = 1;
+            final AtomicInteger tick = new AtomicInteger(1);
             final HashMap<Integer, Container> items = getSwitchAnimation().getInventories();
             GUI currentGUI = GUI.this;
             @Override
             public void run() {
-                if (getSwitchAnimation().getTotalTicks() == ticks) {
+                if (getSwitchAnimation().getTotalTicks() == tick.get()) {
                     GUI.this.setLocked(false);
                     GUI.this.setSwitching(false);
 
@@ -278,23 +288,20 @@ public abstract class GUI {
                     return;
                 }
 
-                if (ticks == getSwitchAnimation().getStayTicks()) {
+                if (tick.get() == getSwitchAnimation().getStayTicks()) {
                     currentGUI = gui;
                     currentGUI.open(p);
                 }
 
+                Container container = items.get(tick.getAndIncrement());
+                Inventory inv = currentGUI.getUpperInventory();
+
                 currentGUI.getUpperInventory().clear();
                 currentGUI.update();
 
-                for (int i = 0; i < currentGUI.getSize(); i++) {
-                    MenuItem item = items.get(ticks).get(i);
-
-                    if (item != null) {
-                        currentGUI.getUpperInventory().setItem(i, item.getItem().toItemStack());
-                    }
-                }
-
-                ticks = ticks + 1;
+                IntStream.range(0, currentGUI.getSize())
+                        .filter(container::isFull)
+                        .forEach(slot -> inv.setItem(slot, container.get(slot).getItem().toItemStack()));
             }
         };
     }
@@ -308,10 +315,10 @@ public abstract class GUI {
         viewers.forEach(player -> NMSManager.getTitleUpdater().updateTitle(player, newTitle));
 
         if (ticks != -1) {
-            Bukkit.getScheduler().runTaskLater(plugin, () -> viewers.forEach(player -> {
-                player.openInventory(getUpperInventory());
+            Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                viewers.forEach(this::open);
                 setTitleChanged(false);
-            }), ticks);
+            }, ticks);
         }
     }
 
@@ -323,66 +330,74 @@ public abstract class GUI {
      * Animates a frame.
      * @param frame The frame to animate.
      */
+    public void runFrame(Frame frame) {
+        runFrame(frame, getUpperContainer());
+    }
+
+    /**
+     * Animates a frame.
+     * @param frame The frame to animate.
+     * @param container The container where the frame will be animated in.
+     */
     public void runFrame(Frame frame, Container container) {
         new RepeatingTask(plugin, 0, frame.getTicksBetweenItems()) {
-            int times = 0;
-            int item = 0;
+            final AtomicInteger timesLoop = new AtomicInteger(0);
+            final AtomicInteger itemLoop = new AtomicInteger(0);
+            final List<MenuItem> items = frame.getItems();
+            final CompatibleSound sound = frame.getSound() != null ? CompatibleSound.matchCompatibleSound(frame.getSound()) : null;
             @Override
             public void run() {
-                if (isClosed() || frame.getTimes() == times || isLocked() || frame.getItems().isEmpty()) {
+                if (isClosed() || isLocked() || frame.getTimes() == timesLoop.get() || items.isEmpty()) {
                     cancel();
                     return;
                 }
 
-                if (item == frame.getItems().size()) {
-                    times = times + 1;
-                    item = 0;
+                if (itemLoop.compareAndSet(items.size(), 0)) {
+                    timesLoop.getAndIncrement();
                 }
 
-                container.set(frame.getItems().get(item), frame.getSlot());
+                container.set(items.get(itemLoop.getAndIncrement()), frame.getSlot());
                 update();
 
-                if (frame.getSound() != null) {
-                    viewers.forEach(player -> player.playSound(player.getLocation(), frame.getSound(), 1f, 1f));
+                if (sound != null) {
+                    viewers.forEach(sound::play);
                 }
-
-                item = item + 1;
             }
         };
     }
 
-    public void runItemAnimations(Container container) {
-        for (int i = 0; i < container.getSize(); i++) {
-            MenuItem item = container.get(i);
-            if (item == null || item.getItem().toItemStack().getType() == Material.AIR || item.getAnimation() == null)
-                continue;
-
-            Animation animation = item.getAnimation();
-
-            Animation.AnimationType type = animation.getType();
-            int delay = type.getDelay();
-            int between = type.getBetween();
-
-            RepeatingTask task = new RepeatingTask(plugin, delay, between) {
-                int loop = 0;
-                @Override
-                public void run() {
-
-                    item.getItem().setName(animation.getAnimations().get(loop));
-                    update();
-
-                    viewers.forEach(Player::updateInventory);
-
-                    loop = loop + 1;
-
-                    if (animation.getAnimations().size() == loop) {
-                        loop = 0;
-                    }
-                }
-            };
-
-            tasks.add(task);
-        }
+    public void runItemAnimations() {
+        runItemAnimations(getUpperContainer());
     }
+
+    public void runItemAnimations(Container container) {
+        IntStream.range(0, container.getSize())
+                .filter(container::isFull)
+                .mapToObj(container::get)
+                .filter(MenuItem::hasAnimation)
+                .forEach(item -> {
+                    Animation animation = item.getAnimation();
+                    Animation.AnimationType type = animation.getType();
+                    List<String> animations = animation.getAnimations();
+
+                    Task task = new RepeatingTask(plugin, type.getDelay(), type.getBetween()) {
+                        final AtomicInteger loop = new AtomicInteger(0);
+                        @Override
+                        public void run() {
+                            item.getItem().setName(animations.get(loop.getAndIncrement()));
+                            update();
+                            viewers.forEach(Player::updateInventory);
+                            loop.compareAndSet(animations.size(), 0);
+                        }
+                    };
+
+                    tasks.add(task);
+                });
+    }
+
+    /**
+     * Override this method to add GUI items.
+     */
+    public void setup() {}
 
 }

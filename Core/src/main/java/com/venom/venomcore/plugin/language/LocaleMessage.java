@@ -2,7 +2,7 @@ package com.venom.venomcore.plugin.language;
 
 import com.venom.venomcore.plugin.chat.Color;
 import org.bukkit.ChatColor;
-import org.bukkit.entity.Player;
+import org.bukkit.command.CommandSender;
 
 import java.util.Map;
 @SuppressWarnings("unused")
@@ -32,17 +32,16 @@ public class LocaleMessage {
 
     /**
      * Sends this locale message to a player.
-     * @param player The player to send the message to.
-     * @param prefix Whether to add a prefix or not.
+     * @param sender The recepient to send the message to.
      */
-    public void sendMessage(Player player, boolean prefix) {
+    public void send(CommandSender sender) {
         String message = text;
-        if (prefix && this.prefix != null) {
+        if (this.prefix != null) {
             message = this.prefix + text;
         }
 
 
-        player.sendMessage(message);
+        sender.sendMessage(Color.translate(message));
     }
 
     /**

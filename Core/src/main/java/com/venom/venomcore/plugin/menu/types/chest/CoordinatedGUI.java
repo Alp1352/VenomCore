@@ -4,7 +4,6 @@ import com.venom.venomcore.plugin.chat.Color;
 import com.venom.venomcore.plugin.item.ItemBuilder;
 import com.venom.venomcore.plugin.menu.GUI;
 import com.venom.venomcore.plugin.menu.MenuType;
-import com.venom.venomcore.plugin.menu.engine.MenuHolder;
 import com.venom.venomcore.plugin.menu.internal.containers.Container;
 import com.venom.venomcore.plugin.menu.internal.item.MenuItem;
 import com.venom.venomcore.plugin.menu.internal.utils.MenuUtils;
@@ -15,6 +14,8 @@ import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.Inventory;
 
 import java.awt.geom.Point2D;
+import java.util.Collection;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -28,7 +29,7 @@ public abstract class CoordinatedGUI extends GUI {
 
     public CoordinatedGUI(VenomPlugin plugin, String menuName, String title, int size) {
         super(plugin, menuName);
-        this.upperInventory = Bukkit.createInventory(new MenuHolder(this), size, Color.translate(title));
+        this.upperInventory = Bukkit.createInventory(this, size, Color.translate(title));
         this.upperContainer = new CoordinatedContainer(size);
     }
 
@@ -38,10 +39,10 @@ public abstract class CoordinatedGUI extends GUI {
 
     @Override
     public CoordinatedGUI construct() {
-        update();
-        upperContainer.getItems().values().forEach(coordinatedItem -> upperInventory.setItem(toSlot(coordinatedItem.getX(), coordinatedItem.getY()), coordinatedItem.getItem().toItemStack()));
-        getUpperContainer().getFrames().forEach(frame -> runFrame(frame, getUpperContainer()));
-        runItemAnimations(getUpperContainer());
+        super.construct();
+        upperContainer.getCoordinatedContents()
+                .forEach(coordinatedItem -> upperInventory.setItem(toSlot(coordinatedItem), coordinatedItem.getItem().toItemStack()));
+
         return this;
     }
 
@@ -73,7 +74,7 @@ public abstract class CoordinatedGUI extends GUI {
         int clickedY = (Math.floorDiv(e.getSlot(), 9)) + 1;
         boolean proceed = false;
 
-        for (CoordinatedItem item : getUpperContainer().getItems().values()) {
+        for (CoordinatedItem item : getUpperContainer().getCoordinatedContents()) {
             if (Point2D.distance(item.getX(), item.getY(), clickedX, clickedY) <= 5.0D) {
                 proceed = true;
             }
@@ -84,7 +85,7 @@ public abstract class CoordinatedGUI extends GUI {
         }
 
         getUpperInventory().clear();
-        for (CoordinatedItem item : getUpperContainer().getItems().values()) {
+        for (CoordinatedItem item : getUpperContainer().getCoordinatedContents()) {
             // TODO newY and newX wrong, fix them
             int newX = item.getX() - (5 - clickedX);
             int newY = item.getY() - (3 - clickedY);
@@ -92,7 +93,7 @@ public abstract class CoordinatedGUI extends GUI {
             item.setX(newX);
             item.setY(newY);
 
-            int slot = toSlot(newX, newY);
+            int slot = toSlot(item);
 
             if (slot > 0 && slot < getUpperContainer().getSize()) {
                 getUpperInventory().setItem(slot, item.getItem().toItemStack());
@@ -102,7 +103,10 @@ public abstract class CoordinatedGUI extends GUI {
         update();
     }
 
-    private int toSlot(int x, int y) {
+    private int toSlot(CoordinatedItem item) {
+        int x = item.getX();
+        int y = item.getY();
+
         return ((y - 1) * 9) + x - 1;
     }
 
@@ -134,20 +138,23 @@ public abstract class CoordinatedGUI extends GUI {
     }
 
     public static class CoordinatedContainer extends Container {
-        private final ConcurrentHashMap<Integer, CoordinatedItem> items = new ConcurrentHashMap<>();
+        private final Map<Integer, CoordinatedItem> items = new ConcurrentHashMap<>();
         public CoordinatedContainer(int size) {
             super(size);
         }
 
-        public void setCoordinatedItem(CoordinatedItem item) {
-            items.put(toSlot(item.getX(), item.getY()), item);
+        public void set(CoordinatedItem item, int slot) {
+            items.put(slot, item);
         }
 
-        private ConcurrentHashMap<Integer, CoordinatedItem> getItems() {
-            return items;
+        public Collection<CoordinatedItem> getCoordinatedContents() {
+            return items.values();
         }
 
-        private int toSlot(int x, int y) {
+        private int toSlot(CoordinatedItem item) {
+            int x = item.getX();
+            int y = item.getY();
+
             return ((y - 1) * 9) + x - 1;
         }
     }

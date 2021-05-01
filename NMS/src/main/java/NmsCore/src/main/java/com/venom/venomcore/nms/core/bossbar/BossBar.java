@@ -7,9 +7,20 @@ public interface BossBar {
 
     void show(Player p);
 
-    void update(String text, int percentage);
+    default void update(String text, double percentage) {
+        update(text);
+        update(percentage);
+    }
 
     void hide();
 
     void hide(Player p);
+
+    void update(String text);
+
+    void update(double percentage);
+
+    double getPercentage();
+
+    String getText();
 }

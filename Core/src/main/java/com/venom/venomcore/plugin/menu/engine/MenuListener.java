@@ -34,10 +34,6 @@ public class MenuListener implements Listener {
     }
 
     private GUI check(Inventory inv) {
-        if (inv.getHolder() == null || !(inv.getHolder() instanceof MenuHolder))
-            return null;
-
-        MenuHolder holder = (MenuHolder) inv.getHolder();
-        return holder.getGUI();
+        return (inv.getHolder() != null && inv.getHolder() instanceof GUI) ? ((GUI) inv.getHolder()) : null;
     }
 }

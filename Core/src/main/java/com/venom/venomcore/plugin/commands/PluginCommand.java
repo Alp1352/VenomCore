@@ -1,6 +1,7 @@
 package com.venom.venomcore.plugin.commands;
 
 import com.venom.venomcore.plugin.chat.Color;
+import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.Validate;
 import org.bukkit.command.Command;
 import org.bukkit.command.*;
@@ -31,7 +32,7 @@ public abstract class PluginCommand extends com.venom.venomcore.plugin.commands.
         pluginCommand.setExecutor(this);
         pluginCommand.setTabCompleter(this);
 
-        if (aliases.length > 0) {
+        if (!ArrayUtils.isEmpty(aliases)) {
             pluginCommand.setAliases(Arrays.asList(aliases));
         }
     }

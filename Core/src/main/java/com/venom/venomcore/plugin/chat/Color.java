@@ -1,15 +1,32 @@
 package com.venom.venomcore.plugin.chat;
-import org.bukkit.ChatColor;
 
-import java.util.Random;
+import com.venom.venomcore.plugin.server.ServerVersion;
+import net.md_5.bungee.api.ChatColor;
+
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * A class for faster color codes.
  */
 public class Color {
 
-    public static String translate(String string){
-        return ChatColor.translateAlternateColorCodes('&', string);
+    private static final Pattern HEX_PATTERN = Pattern.compile("#[a-fA-F0-9]{6}");
+
+    public static String translate(String message) {
+        String translated = message;
+
+        if (ServerVersion.isServerVersionHigherOrEqual(ServerVersion.v1_16_R1)) {
+            Matcher matcher = HEX_PATTERN.matcher(translated);
+
+            while (matcher.find()) {
+                String color = translated.substring(matcher.start(), matcher.end());
+                translated = translated.replace(color, ChatColor.of(color) + "");
+                matcher = HEX_PATTERN.matcher(translated);
+            }
+        }
+
+        return ChatColor.translateAlternateColorCodes('&', translated);
     }
 
     public static String RED(String string){
@@ -71,9 +88,6 @@ public class Color {
     }
     public static String MAGIC(String string){
         return ChatColor.MAGIC + string;
-    }
-    public static String RANDOM(String string){
-        return ChatColor.getByChar(Integer.toHexString(new Random().nextInt(16))) + string;
     }
 
 }

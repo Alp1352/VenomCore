@@ -2,7 +2,6 @@ package com.venom.venomcore.plugin.menu.types;
 
 import com.venom.venomcore.plugin.menu.GUI;
 import com.venom.venomcore.plugin.menu.MenuType;
-import com.venom.venomcore.plugin.menu.engine.MenuHolder;
 import com.venom.venomcore.plugin.menu.internal.containers.Container;
 import com.venom.venomcore.plugin.menu.internal.utils.MenuUtils;
 import com.venom.venomcore.plugin.plugin.VenomPlugin;
@@ -23,7 +22,7 @@ public abstract class OtherGUI extends GUI {
     public OtherGUI(VenomPlugin plugin, String menuName, String title, MenuType type) {
         super(plugin, menuName);
         this.type = type;
-        this.upperInventory = Bukkit.createInventory(new MenuHolder(this), type.toBukkit(), title);
+        this.upperInventory = Bukkit.createInventory(this, type.toBukkit(), title);
         this.upperContainer = new Container(upperInventory.getSize());
     }
 

@@ -3,13 +3,13 @@ package com.venom.venomcore.plugin.menu.internal.containers;
 import com.venom.venomcore.plugin.menu.internal.animations.Frame;
 import com.venom.venomcore.plugin.menu.internal.containers.panes.PaneSelector;
 import com.venom.venomcore.plugin.menu.internal.item.MenuItem;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-public class Container {
+import java.util.stream.IntStream;
+
+public class Container implements Iterable<MenuItem> {
 
     private final List<Integer> reservedSlots = Collections.synchronizedList(new ArrayList<>());
     private final List<Frame> frames = Collections.synchronizedList(new ArrayList<>());
@@ -82,6 +82,18 @@ public class Container {
         items.remove(slot);
     }
 
+    public boolean isFree(int slot) {
+        return isEmpty(slot) && !isReserved(slot);
+    }
+
+    public boolean isEmpty(int slot) {
+        return get(slot) == null;
+    }
+
+    public boolean isFull(int slot) {
+        return get(slot) != null;
+    }
+
     public void reserve(Integer... slot) {
         reservedSlots.addAll(Arrays.asList(slot));
     }
@@ -94,6 +106,14 @@ public class Container {
         return reservedSlots;
     }
 
+    public boolean isReserved(int slot) {
+        return reservedSlots.contains(slot);
+    }
+
+    public Collection<MenuItem> getContents() {
+        return items.values();
+    }
+
     public int getSize() {
         return size;
     }
@@ -103,21 +123,23 @@ public class Container {
     }
 
     public int getNextFreeSlot(int beginIndex) {
-        for (int i = beginIndex; i < size; i++) {
-            if (!reservedSlots.contains(i) && get(i) == null) {
-                return i;
-            }
-        }
-        return -1;
+        return IntStream.range(beginIndex, size)
+                .filter(this::isFree)
+                .findAny()
+                .orElse(-1);
     }
 
     public int getFreeSlotCount() {
-        int a = 0;
-        for (int i = 0; i < size; i++) {
-            if (!reservedSlots.contains(i) && get(i) == null) {
-                a = a + 1;
-            }
-        }
-        return a;
+        return (int) IntStream.range(0, size)
+                .boxed()
+                .filter(this::isFree)
+                .count();
+    }
+
+    @NotNull
+    @Override
+    public Iterator<MenuItem> iterator() {
+        return items.values()
+                .iterator();
     }
 }
