@@ -26,11 +26,13 @@ import java.util.concurrent.atomic.AtomicReference;
 public class Conversation<V> implements Listener {
 
     public static final Conversation<?> END_OF_CONVERSATION = null;
-    private static final Set<UUID> ALL_CONVERSING_PLAYERS = new CopyOnWriteArraySet<>();
+    private static final Set<Conversation<?>> ALL_ACTIVE_CONVERSATIONS = new CopyOnWriteArraySet<>();
     private static final BukkitScheduler SCHEDULER = Bukkit.getScheduler();
 
     private final Plugin plugin;
-    private final Player player;
+
+    private final List<UUID> players = new ArrayList<>();
+    private final Map<UUID, BukkitTask> expireTasks = new HashMap<>();
 
     private final ConversationGetter<V> getter;
 
@@ -45,8 +47,6 @@ public class Conversation<V> implements Listener {
 
     private final Conversation<?> next;
 
-    private BukkitTask expireTask;
-
     private final AtomicReference<State> state = new AtomicReference<>(State.NOT_STARTED);
     private final LocalEcho echo;
 
@@ -57,8 +57,6 @@ public class Conversation<V> implements Listener {
      *
      * @param plugin The plugin creating the new conversation.
      *
-     * @param player The player we will be getting values from.
-     *
      * @param messages The messages the player will see on the start
      *                 of the conversation. See {@link ConversationView}.
      *
@@ -68,14 +66,14 @@ public class Conversation<V> implements Listener {
      *               the getter should return null.
      *
      * @param onValid Function to run once a valid input is received.
-     *                If you only want one input, you can use {@link Conversation#next()}
+     *                If you only want one input, you can use {@link Conversation#next(Player)}
      *                method to start the next conversation or you can just
-     *                end it via {@link Conversation#stop()} or {@link Conversation#stopDirect()}.
+     *                end it via {@link Conversation#stop(Player)} or {@link Conversation#stopDirect(Player)}.
      *
      * @param onInvalid Function to run once an invalid input is received.
-     *                  As with valid function, you can also use {@link Conversation#next()}
+     *                  As with valid function, you can also use {@link Conversation#next(Player)}
      *                  method to start the next conversation or you can just
-     *                  end it via {@link Conversation#stop()} or {@link Conversation#stopDirect()}.
+     *                  end it via {@link Conversation#stop(Player)} or {@link Conversation#stopDirect(Player)}.
      *
      * @param onCancel Function run when the conversation is cancelled.
      *                 The reason will also be specified with the
@@ -94,11 +92,10 @@ public class Conversation<V> implements Listener {
      * @param next The next conversation. If this is the end,
      *             you should use {@link Conversation#END_OF_CONVERSATION}.
      *             If you want this conversation to pass on to a new one,
-     *             you can use {@link Conversation#next()} method.
+     *             you can use {@link Conversation#next(Player)} method.
      */
     public Conversation(
             Plugin plugin,
-            Player player,
             Collection<ConversationView> messages,
             ConversationGetter<V> getter,
             ConversationAction<V> onValid,
@@ -111,7 +108,6 @@ public class Conversation<V> implements Listener {
             ) {
 
         this.plugin = plugin;
-        this.player = player;
         this.messages = messages;
         this.getter = getter;
         this.validAction = onValid;
@@ -121,60 +117,66 @@ public class Conversation<V> implements Listener {
         this.echo = echo;
         this.cancel = cancel;
         this.next = next;
-
-        Bukkit.getPluginManager()
-                .registerEvents(this, plugin);
     }
 
     @EventHandler
     protected void onQuit(PlayerQuitEvent e) {
-        if (e.getPlayer().equals(player) && state.get() == State.ACTIVE) {
-            stopDirect();
-            handle(cancelAction, Reason.DISCONNECT);
+        Player player = e.getPlayer();
+        UUID uuid = player.getUniqueId();
+
+        if (players.contains(uuid) && state.get() == State.ACTIVE) {
+            stopDirect(player);
+            handle(cancelAction, player, Reason.DISCONNECT);
         }
     }
 
     @EventHandler
     protected void onChat(AsyncPlayerChatEvent e) {
-        UUID uuid = e.getPlayer().getUniqueId();
+        Player player = e.getPlayer();
+        UUID uuid = player.getUniqueId();
 
-        if (!uuid.equals(this.player.getUniqueId()) || state.get() != State.ACTIVE) return;
+        if (!players.contains(uuid) || state.get() != State.ACTIVE) return;
 
         String prompt = e.getMessage();
 
         e.setCancelled(true);
 
         if (cancel != null && !cancel.isEmpty() && cancel.contains(prompt)) {
-            stopDirect();
-            handle(cancelAction, Reason.EXIT);
+            stopDirect(player);
+            handle(cancelAction, player, Reason.EXIT);
             return;
         }
 
         V value = getter.get(prompt);
 
         if (value == null) {
-            handle(invalidAction, prompt);
+            handle(invalidAction, player, prompt);
             if (echo == LocalEcho.ALWAYS || echo == LocalEcho.ONLY_ON_INVALID) {
                 player.sendMessage(prompt);
             }
             return;
         }
 
-        handle(validAction, value);
+        handle(validAction, player, value);
         if (echo == LocalEcho.ALWAYS || echo == LocalEcho.ONLY_ON_VALID) {
             player.sendMessage(prompt);
         }
 
-        startExpireTask();
+        startExpireTask(player);
     }
 
 
     /**
      * Start the conversation.
      */
-    public void start() {
-        ALL_CONVERSING_PLAYERS.add(player.getUniqueId());
-        startExpireTask();
+    public void start(Player player) {
+        ALL_ACTIVE_CONVERSATIONS.add(this);
+        players.add(player.getUniqueId());
+
+        Bukkit.getPluginManager()
+                .registerEvents(this, plugin);
+
+        startExpireTask(player);
 
         for (ConversationView message : messages) {
             message.handle(player, plugin);
@@ -187,11 +189,11 @@ public class Conversation<V> implements Listener {
      * End the current conversation,
      * and get to the next one.
      */
-    public void next() {
-        stopDirect();
+    public void next(Player player) {
+        stopDirect(player);
 
         if (next != END_OF_CONVERSATION) {
-            next.start();
+            next.start(player);
         }
     }
 
@@ -200,50 +202,61 @@ public class Conversation<V> implements Listener {
      * Do note that this will also run
      * your cancel function with {@link Reason#PLUGIN} reason.
      */
-    public void stop() {
-        stopDirect();
-        handle(cancelAction, Reason.PLUGIN);
+    public void stop(Player player) {
+        stopDirect(player);
+        handle(cancelAction, player, Reason.PLUGIN);
     }
 
     /**
      * Stops the conversation WITHOUT
      * running your cancel function.
      */
-    public void stopDirect() {
-        HandlerList.unregisterAll(this);
-        ALL_CONVERSING_PLAYERS.remove(player.getUniqueId());
+    public void stopDirect(Player player) {
+        UUID uuid = player.getUniqueId();
 
-        if (expireTask != null) {
-            expireTask.cancel();
+        players.remove(uuid);
+
+        if (players.isEmpty()) {
+            ALL_ACTIVE_CONVERSATIONS.remove(this);
+            HandlerList.unregisterAll(this);
         }
 
-        expireTask = null;
+        BukkitTask task = expireTasks.get(uuid);
+
+        if (task != null) {
+            task.cancel();
+            expireTasks.remove(uuid);
+        }
 
         state.set(State.OVER);
     }
 
-    private <K> void handle(ConversationAction<K> action, K value) {
+    private <K> void handle(ConversationAction<K> action, Player player, K value) {
         SCHEDULER.runTask(plugin, () -> action.handle(player, value, this));
     }
 
-    private void startExpireTask() {
+    private void startExpireTask(Player player) {
         if (expire == -1) return;
+
+        UUID uuid = player.getUniqueId();
+
+        BukkitTask expireTask = expireTasks.get(uuid);
 
         if (expireTask != null) {
             expireTask.cancel();
-            expireTask = null;
+            expireTasks.remove(uuid);
         }
 
 
         BukkitRunnable task = new BukkitRunnable() {
             @Override
             public void run() {
-                stopDirect();
-                handle(cancelAction, Reason.EXPIRE);
+                stopDirect(player);
+                handle(cancelAction, player, Reason.EXPIRE);
             }
         };
 
-        this.expireTask = task.runTaskLaterAsynchronously(plugin, expire);
+        expireTasks.put(uuid, task.runTaskLaterAsynchronously(plugin, expire));
     }
 
     /**
@@ -278,23 +291,23 @@ public class Conversation<V> implements Listener {
      * @return True if the player is in a conversation.
      */
     public static boolean isConversing(UUID uuid) {
-        return ALL_CONVERSING_PLAYERS.contains(uuid);
+        return ALL_ACTIVE_CONVERSATIONS.stream()
+                .map(conversation -> conversation.players)
+                .anyMatch(list -> list.contains(uuid));
     }
 
     /**
      * Get the conversation builder.
      * @param plugin The plugin requesting the builder.
-     * @param player The player the server will communicate with.
      * @param <V> The type of the conversation i.e. Integer.
      * @return The builder.
      */
-    public static <V> Builder<V> builder(Plugin plugin, Player player) {
-        return new Builder<>(plugin, player);
+    public static <V> Builder<V> builder(Plugin plugin) {
+        return new Builder<>(plugin);
     }
 
     public static class Builder<V> {
         private final Plugin plugin;
-        private final Player player;
         private final List<ConversationView> views = new ArrayList<>();
         private final List<String> messages = new ArrayList<>();
 
@@ -310,9 +323,8 @@ public class Conversation<V> implements Listener {
         private Conversation<?> next = Conversation.END_OF_CONVERSATION;
         private int expire = -1;
 
-        private Builder(Plugin plugin, Player player) {
+        private Builder(Plugin plugin) {
             this.plugin = plugin;
-            this.player = player;
         }
 
         public Builder<V> withView(ConversationView... views) {
@@ -371,7 +383,7 @@ public class Conversation<V> implements Listener {
         }
 
         public Conversation<V> build() {
-            return new Conversation<>(plugin, player, views, getter, valid, invalid, cancel, expire, echo, messages, next);
+            return new Conversation<>(plugin, views, getter, valid, invalid, cancel, expire, echo, messages, next);
         }
     }
 }

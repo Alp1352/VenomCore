@@ -1,6 +1,7 @@
 package com.venom.venomcore.plugin.plugin;
 
 import com.venom.venomcore.plugin.VenomCore;
+import com.venom.venomcore.plugin.chat.conversations.ConversationFactory;
 import com.venom.venomcore.plugin.database.DatabaseType;
 import com.venom.venomcore.plugin.external.dependency.Dependency;
 import com.venom.venomcore.plugin.external.dependency.DependencyType;
@@ -27,6 +28,7 @@ public abstract class VenomPlugin extends JavaPlugin {
     private DependencyManager dependencyManager;
     private PluginSettings settings;
     private Executor executor;
+    private ConversationFactory factory;
 
     @Override
     public void onEnable() {
@@ -34,6 +36,7 @@ public abstract class VenomPlugin extends JavaPlugin {
         settings = new PluginSettings();
         dependencyManager = new DependencyManager();
         executor = new BukkitExecutor(this);
+        factory = new ConversationFactory(this);
         sender.sendMessage(" ");
         sender.sendMessage(ChatColor.GREEN + "=============================");
         sender.sendMessage(ChatColor.GRAY + getDescription().getName() + ChatColor.DARK_GREEN + " by VenomWorkshop <3!");
@@ -192,6 +195,10 @@ public abstract class VenomPlugin extends JavaPlugin {
 
     public Executor getBukkitExecutor() {
         return executor;
+    }
+
+    public ConversationFactory getConversationFactory() {
+        return factory;
     }
 
     /**

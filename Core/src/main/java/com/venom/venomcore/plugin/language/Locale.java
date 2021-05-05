@@ -7,12 +7,9 @@ import de.leonhard.storage.Yaml;
 import de.leonhard.storage.internal.settings.ConfigSettings;
 import de.leonhard.storage.internal.settings.DataType;
 import de.leonhard.storage.internal.settings.ReloadSettings;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 
 import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
@@ -97,15 +94,14 @@ public class Locale {
     /**
      * Copies a locale from resources folder.
      * @param plugin The plugin responsible.
-     * @param inputStream The input stream.
      * @param localeName The locale name i.e. en_US.
      */
-    public static void copyLocale(VenomPlugin plugin, LocaleType type, InputStream inputStream, String localeName) {
-        File localeFile = new File(getFolder(plugin, type), withExtension(localeName));
-        try {
-            FileUtils.copyInputStreamToFile(inputStream, localeFile);
-        } catch (IOException e) {
-            e.printStackTrace();
+    public static void copyLocale(VenomPlugin plugin, LocaleType type, String localeName) {
+        String name = withExtension(localeName);
+
+        File localeFile = new File(getFolder(plugin, type), name);
+        if (!localeFile.exists()) {
+            plugin.saveResource("locales" + File.separator + type.get() + File.separator + name, false);
         }
     }
 
@@ -116,9 +112,7 @@ public class Locale {
      */
     public static void copyLocales(VenomPlugin plugin, LocaleType type, String... localeNames) {
         for (String name : localeNames) {
-            String localeName = withExtension(name);
-            InputStream stream = plugin.getResource("locales" + File.separator + type.get() + File.separator + localeName);
-            copyLocale(plugin, type, stream, localeName);
+            copyLocale(plugin, type, name);
         }
     }
 
@@ -207,7 +201,7 @@ public class Locale {
      * @return The folder.
      */
     private static File getFolder(VenomPlugin plugin, LocaleType type) {
-        return new File(plugin.getDataFolder(), File.separator + "locales" + File.separator + type.get());
+        return new File(plugin.getDataFolder(), "locales" + File.separator + type.get());
     }
 
     public enum LocaleType {
@@ -263,7 +257,7 @@ public class Locale {
      * @return The locale name i.e en_US
      */
     public String getLocaleName() {
-        return localeName;
+        return FilenameUtils.removeExtension(localeName);
     }
 
     /**

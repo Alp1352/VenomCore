@@ -4,18 +4,21 @@ import com.venom.venomcore.plugin.external.skyblock.IslandHook;
 import com.venom.venomcore.plugin.external.skyblock.SkyBlockHook;
 import com.wasteofplastic.askyblock.ASkyBlock;
 import com.wasteofplastic.askyblock.ASkyBlockAPI;
+import com.wasteofplastic.askyblock.commands.IslandCmd;
 import com.wasteofplastic.askyblock.schematics.Schematic;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 public class ASkyBlockHook extends SkyBlockHook {
     @Override
     public void createIsland(Player p, @Nullable String schematic) {
-        if (schematic == null) {
+        if (schematic == null || schematic.isEmpty()) {
             ASkyBlock.getPlugin().getIslandCmd().newIsland(p);
         } else {
             Schematic pasteSchem = ASkyBlock.getPlugin().getIslandCmd().getSchematics(p, true).stream().filter(paste -> paste.getName().equalsIgnoreCase(schematic)).findFirst().orElse(null);
@@ -36,6 +39,15 @@ public class ASkyBlockHook extends SkyBlockHook {
     @Override
     public int getIslandCount() {
         return ASkyBlockAPI.getInstance().getIslandCount();
+    }
+
+    @Override
+    public List<String> getAllSchematics() {
+        return IslandCmd.getSchematics()
+                .values()
+                .stream()
+                .map(Schematic::getName)
+                .collect(Collectors.toList());
     }
 
     @Override

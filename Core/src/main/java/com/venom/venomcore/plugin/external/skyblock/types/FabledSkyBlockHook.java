@@ -15,6 +15,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 public class FabledSkyBlockHook extends SkyBlockHook {
     private final IslandManager islandManager = SkyBlockAPI.getIslandManager();
@@ -40,6 +41,14 @@ public class FabledSkyBlockHook extends SkyBlockHook {
     @Override
     public int getIslandCount() {
         return islandManager.getIslands().size();
+    }
+
+    @Override
+    public List<String> getAllSchematics() {
+        return structureManager.getStructures()
+                .stream()
+                .map(Structure::getName)
+                .collect(Collectors.toList());
     }
 
     @Override

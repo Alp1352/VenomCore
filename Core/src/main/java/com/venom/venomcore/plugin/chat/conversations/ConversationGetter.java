@@ -1,5 +1,6 @@
 package com.venom.venomcore.plugin.chat.conversations;
 
+import com.google.common.base.Enums;
 import org.apache.commons.lang.math.NumberUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -26,5 +27,8 @@ public interface ConversationGetter<T> {
                 string.equalsIgnoreCase("true") ? Boolean.TRUE : string.equalsIgnoreCase("false") ? Boolean.FALSE : null;
     }
 
+    static <V extends Enum<V>> ConversationGetter<V> constant(Class<V> clazz) {
+        return input -> Enums.getIfPresent(clazz, input).orNull();
+    }
 
 }

@@ -6,6 +6,7 @@ import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
 import java.util.UUID;
 
 public abstract class SkyBlockHook implements Hook {
@@ -34,6 +35,13 @@ public abstract class SkyBlockHook implements Hook {
      * @return All islands in the server.
      */
     public abstract int getIslandCount();
+
+    /**
+     * Get all the schematics.
+     * Do note that iridium skyblock does not have any.
+     * @return All the schematics names.
+     */
+    public abstract List<String> getAllSchematics();
 
     /**
      * Checks if an island exist in the given location

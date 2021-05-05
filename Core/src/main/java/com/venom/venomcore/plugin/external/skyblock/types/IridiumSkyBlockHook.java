@@ -9,6 +9,8 @@ import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 public class IridiumSkyBlockHook extends SkyBlockHook {
@@ -30,6 +32,11 @@ public class IridiumSkyBlockHook extends SkyBlockHook {
     @Override
     public int getIslandCount() {
         return IslandManager.getLoadedIslands().size();
+    }
+
+    @Override
+    public List<String> getAllSchematics() {
+        return new ArrayList<>();
     }
 
     @Override

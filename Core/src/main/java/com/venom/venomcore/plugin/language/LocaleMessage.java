@@ -58,7 +58,7 @@ public class LocaleMessage {
      * @return The string with colors.
      */
     public String toColorizedText() {
-        return Color.translate(text);
+        return prefix != null ? (prefix + text) : text;
     }
 
     /**
